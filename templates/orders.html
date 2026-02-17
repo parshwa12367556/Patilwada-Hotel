@@ -1,0 +1,412 @@
+{% extends "base.html" %}
+
+{% block title %}My Orders - FoodieExpress{% endblock %}
+
+{% block extra_css %}
+    <style>
+        .orders-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 60px 0;
+            margin-bottom: 30px;
+        }
+        
+        .filter-section {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 30px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+        
+        .status-pending {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        .status-confirmed {
+            background: #cce5ff;
+            color: #004085;
+        }
+        
+        .status-preparing {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .status-out-for-delivery {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+        
+        .status-delivered {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .status-cancelled {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .order-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            transition: all 0.3s;
+        }
+        
+        .order-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+        }
+        
+        .order-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #e1e1e1;
+            margin-bottom: 15px;
+        }
+        
+        .order-items {
+            margin: 15px 0;
+        }
+        
+        .order-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 0.95rem;
+        }
+        
+        .order-item-name {
+            color: #666;
+        }
+        
+        .order-item-price {
+            font-weight: 500;
+        }
+        
+        .order-total {
+            display: flex;
+            justify-content: space-between;
+            padding-top: 15px;
+            border-top: 1px dashed #e1e1e1;
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+        
+        .track-progress {
+            margin: 20px 0;
+            position: relative;
+        }
+        
+        .progress-steps {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        
+        .step {
+            text-align: center;
+            position: relative;
+            flex: 1;
+        }
+        
+        .step-icon {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: #e1e1e1;
+            color: #999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 5px;
+            z-index: 2;
+            position: relative;
+        }
+        
+        .step.completed .step-icon {
+            background: #28a745;
+            color: white;
+        }
+        
+        .step.active .step-icon {
+            background: #007bff;
+            color: white;
+        }
+        
+        .step-label {
+            font-size: 0.75rem;
+            color: #666;
+        }
+        
+        .progress-line {
+            position: absolute;
+            top: 15px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: #e1e1e1;
+            z-index: 1;
+        }
+        
+        .progress-line-fill {
+            height: 100%;
+            background: #28a745;
+            width: 0;
+            transition: width 0.3s;
+        }
+        
+        .rating-stars {
+            color: #ffc107;
+            font-size: 1.2rem;
+        }
+        
+        .rating-stars i {
+            cursor: pointer;
+            margin-right: 5px;
+        }
+        
+        .search-box {
+            position: relative;
+        }
+        
+        .search-box i {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #666;
+        }
+        
+        .search-box input {
+            padding-left: 40px;
+        }
+        
+        .empty-orders {
+            text-align: center;
+            padding: 60px 20px;
+        }
+        
+        .empty-orders img {
+            width: 200px;
+            margin-bottom: 30px;
+            opacity: 0.5;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <!-- Orders Header -->
+    <div class="orders-header">
+        <div class="container text-center">
+            <h1 class="display-5 fw-bold mb-3">
+                <i class="fas fa-shopping-bag me-3"></i>My Orders
+            </h1>
+            <p class="lead mb-0">Track and manage all your food orders</p>
+        </div>
+    </div>
+    
+    <!-- Main Content -->
+    <div class="container py-4">
+        <!-- Filter Section -->
+        <div class="filter-section">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <div class="search-box">
+                        <i class="fas fa-search"></i>
+                        <input type="text" class="form-control" placeholder="Search by order ID or restaurant" id="searchOrder">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <select class="form-select" id="statusFilter">
+                        <option value="all">All Orders</option>
+                        <option value="pending">Pending</option>
+                        <option value="confirmed">Confirmed</option>
+                        <option value="preparing">Preparing</option>
+                        <option value="out-for-delivery">Out for Delivery</option>
+                        <option value="delivered">Delivered</option>
+                        <option value="cancelled">Cancelled</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <select class="form-select" id="dateFilter">
+                        <option value="all">All Time</option>
+                        <option value="today">Today</option>
+                        <option value="week">This Week</option>
+                        <option value="month">This Month</option>
+                        <option value="3months">Last 3 Months</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button class="btn btn-outline-primary w-100" onclick="applyFilters()">
+                        <i class="fas fa-filter me-2"></i>Apply
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Orders List -->
+        <div class="orders-list">
+            {% for order in orders.items %}
+            <div class="order-card" data-status="{{ order.status }}" data-date="{{ order.created_at.strftime('%Y-%m-%d') }}">
+                <div class="order-header">
+                    <div>
+                        <h5 class="mb-1">Order #{{ order.order_number }}</h5>
+                        <p class="text-muted small mb-0">
+                            <i class="fas fa-calendar me-1"></i>{{ order.created_at.strftime('%b %d, %Y %I:%M %p') }}
+                            <!-- <i class="fas fa-store ms-3 me-1"></i>Pizza Paradise -->
+                        </p>
+                    </div>
+                    <span class="status-badge status-{{ order.status }}">{{ order.status|title }}</span>
+                </div>
+                
+                <div class="order-items">
+                    {% for item in order.items %}
+                    <div class="order-item">
+                        <span class="order-item-name">{{ item.food_item.name }} x {{ item.quantity }}</span>
+                        <span class="order-item-price">₹{{ item.price * item.quantity }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+                
+                <div class="order-total">
+                    <span>Total Amount</span>
+                    <span>₹{{ order.total_amount }}</span>
+                </div>
+                
+                <div class="mt-3 d-flex gap-2">
+                    {% if order.status in ['pending', 'confirmed'] %}
+                    <form action="{{ url_for('cancel_order', order_id=order.id) }}" method="POST" onsubmit="return confirm('Are you sure?');">
+                        <button type="submit" class="btn btn-outline-danger btn-sm">
+                        Cancel Order
+                        </button>
+                    </form>
+                    {% endif %}
+                    <a href="{{ url_for('order_details', order_id=order.id) }}" class="btn btn-outline-secondary btn-sm">
+                        View Details
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+            
+            <!-- Empty State (Hidden by default) -->
+            <div class="empty-orders {% if orders.items %}d-none{% endif %}">
+                <img src="/static/images/empty-orders.png" alt="No orders">
+                <h4>No orders found</h4>
+                <p class="text-muted mb-4">You haven't placed any orders yet</p>
+                <a href="/menu" class="btn btn-primary btn-lg">
+                    <i class="fas fa-utensils me-2"></i>Browse Menu
+                </a>
+            </div>
+        </div>
+        
+        <!-- Pagination -->
+        <nav class="mt-5">
+            <ul class="pagination justify-content-center">
+                <li class="page-item disabled">
+                    <a class="page-link" href="#" tabindex="-1">Previous</a>
+                </li>
+                <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                <li class="page-item"><a class="page-link" href="#">2</a></li>
+                <li class="page-item"><a class="page-link" href="#">3</a></li>
+                <li class="page-item">
+                    <a class="page-link" href="#">Next</a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+{% endblock %}
+    
+{% block extra_js %}
+    <script>
+        $(document).ready(function() {
+            // Star rating hover effect
+            $('.rating-stars i').hover(
+                function() {
+                    const rating = $(this).data('rating');
+                    $(this).parent().find('i').each(function(index) {
+                        if (index < rating) {
+                            $(this).removeClass('far').addClass('fas');
+                        }
+                    });
+                },
+                function() {
+                    $(this).parent().find('i').removeClass('fas').addClass('far');
+                }
+            );
+            
+            // Star rating click
+            $('.rating-stars i').click(function() {
+                const rating = $(this).data('rating');
+                $(this).parent().find('i').each(function(index) {
+                    if (index < rating) {
+                        $(this).removeClass('far').addClass('fas');
+                    } else {
+                        $(this).removeClass('fas').addClass('far');
+                    }
+                });
+            });
+        });
+        
+        // Order functions
+        function trackOrder(orderId) {
+            alert(`Tracking order ${orderId}`);
+        }
+        
+        function cancelOrder(orderId) {
+            if (confirm('Are you sure you want to cancel this order?')) {
+                alert(`Order ${orderId} cancelled`);
+            }
+        }
+        
+        function reorder(orderId) {
+            alert(`Adding items from order ${orderId} to cart`);
+        }
+        
+        function submitRating(orderId) {
+            alert(`Thank you for rating order ${orderId}`);
+        }
+        
+        function applyFilters() {
+            const status = $('#statusFilter').val();
+            const date = $('#dateFilter').val();
+            const search = $('#searchOrder').val().toLowerCase();
+            
+            $('.order-card').each(function() {
+                let show = true;
+                
+                if (status !== 'all' && $(this).data('status') !== status) {
+                    show = false;
+                }
+                
+                if (search && !$(this).find('h5').text().toLowerCase().includes(search)) {
+                    show = false;
+                }
+                
+                $(this).toggle(show);
+            });
+            
+            // Show empty state if no orders visible
+            if ($('.order-card:visible').length === 0) {
+                $('.empty-orders').removeClass('d-none');
+            } else {
+                $('.empty-orders').addClass('d-none');
+            }
+        }
+    </script>
+{% endblock %}

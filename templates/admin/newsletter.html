@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+
+{% block title %}Newsletter Subscribers - FoodieExpress{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Newsletter Subscribers</h2>
+        <a href="{{ url_for('export_newsletter') }}" class="btn btn-success">
+            <i class="fas fa-file-csv me-2"></i>Export CSV
+        </a>
+    </div>
+
+    <div class="card shadow">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Email</th>
+                            <th>Subscribed Date</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for sub in subscribers.items %}
+                        <tr>
+                            <td>{{ sub.id }}</td>
+                            <td>{{ sub.email }}</td>
+                            <td>{{ sub.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                            <td>
+                                <form action="{{ url_for('delete_subscriber', id=sub.id) }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure?');">
+                                    <button type="submit" class="btn btn-sm btn-danger">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                        {% if not subscribers.items %}
+                        <tr>
+                            <td colspan="4" class="text-center py-4 text-muted">No subscribers found.</td>
+                        </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            <nav class="mt-4">
+                <ul class="pagination justify-content-center">
+                    {% if subscribers.has_prev %}
+                    <li class="page-item"><a class="page-link" href="{{ url_for('admin_newsletter', page=subscribers.prev_num) }}">Previous</a></li>
+                    {% else %}
+                    <li class="page-item disabled"><span class="page-link">Previous</span></li>
+                    {% endif %}
+                    
+                    {% if subscribers.has_next %}
+                    <li class="page-item"><a class="page-link" href="{{ url_for('admin_newsletter', page=subscribers.next_num) }}">Next</a></li>
+                    {% else %}
+                    <li class="page-item disabled"><span class="page-link">Next</span></li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+    </div>
+</div>
+{% endblock %}

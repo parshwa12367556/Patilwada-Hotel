@@ -1,0 +1,204 @@
+    <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm sticky-top py-3">
+        <div class="container">
+            <!-- Brand -->
+            <a class="navbar-brand d-flex align-items-center" href="{{ url_for('admin_dashboard') if current_user.is_authenticated and current_user.is_admin else url_for('index') }}">
+                <div class="brand-icon bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 40px; height: 40px;">
+                    <i class="fas fa-concierge-bell"></i>
+                </div>
+                <span class="fw-bold text-primary fs-4">HotelServe</span>
+            </a>
+            
+            <!-- Mobile Toggle -->
+            <button class="navbar-toggler border-0 shadow-none" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMain" aria-controls="navbarMain" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <!-- Navbar Links -->
+            <div class="collapse navbar-collapse" id="navbarMain">
+                <!-- Left Side Links -->
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0 ms-lg-4">
+                    {% if current_user.is_authenticated and current_user.is_admin %}
+                    <li class="nav-item">
+                        <a class="nav-link px-3" href="/admin">Dashboard</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link px-3" href="/admin/orders">Orders</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link px-3" href="/admin/foods">Foods</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link px-3" href="/admin/users">Users</a>
+                    </li>
+                    {% else %}
+                    <li class="nav-item">
+                        <a class="nav-link px-3" href="/">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link px-3" href="/menu">Menu</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link px-3" href="/my-orders">My Orders</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link px-3" href="/services">Services</a>
+                    </li>
+                    {% endif %}
+                </ul>
+                
+                <!-- Search Bar -->
+                {% if not current_user.is_authenticated or not current_user.is_admin %}
+                <form class="d-flex mx-lg-auto mb-3 mb-lg-0" action="/menu" method="GET">
+                    <div class="input-group rounded-pill overflow-hidden bg-light border">
+                        <input class="form-control border-0 bg-transparent ps-4" type="search" name="search" placeholder="Search for food..." aria-label="Search" style="width: 250px;">
+                        <button class="btn border-0 text-muted" type="submit">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                </form>
+                {% endif %}
+                
+                <!-- Right Side Links -->
+                <ul class="navbar-nav ms-auto mb-2 mb-lg-0 align-items-center">
+                    <!-- Admin Notifications -->
+                    {% if current_user.is_authenticated and current_user.is_admin %}
+                    <li class="nav-item me-3">
+                        <a class="nav-link position-relative icon-link" href="/admin/services">
+                            <i class="fas fa-bell fa-lg"></i>
+                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger border border-white {% if not pending_services_count %}d-none{% endif %}" id="serviceBadge">
+                                {{ pending_services_count }}
+                            </span>
+                        </a>
+                    </li>
+                    {% endif %}
+
+                    <!-- Cart -->
+                    {% if not current_user.is_authenticated or not current_user.is_admin %}
+                    <li class="nav-item me-3">
+                        <a class="nav-link position-relative icon-link" href="/cart">
+                            <i class="fas fa-shopping-cart fa-lg"></i>
+                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger border border-white cart-count" id="cart-nav-count">
+                                {{ cart_count }}
+                                <span class="visually-hidden">items in cart</span>
+                            </span>
+                        </a>
+                    </li>
+                    {% endif %}
+                    
+                    <!-- User Dropdown (Logged In) -->
+                    {% if current_user.is_authenticated %}
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <div class="avatar bg-light text-primary rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 35px; height: 35px;">
+                                <i class="fas fa-user"></i>
+                            </div>
+                            <span class="fw-medium">{{ current_user.name.split()[0] }}</span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 mt-2" aria-labelledby="userDropdown">
+                            <li>
+                                <div class="px-3 py-2 border-bottom mb-2">
+                                    <div class="fw-bold text-dark">{{ current_user.name }}</div>
+                                    <div class="small text-muted">{{ current_user.email }}</div>
+                                </div>
+                            </li>
+                            <li>
+                                <a class="dropdown-item py-2" href="/profile">
+                                    <i class="fas fa-id-card me-2 text-muted"></i>Profile
+                                </a>
+                            </li>
+                            {% if current_user.is_admin %}
+                            <li>
+                                <a class="dropdown-item py-2" href="/admin">
+                                    <i class="fas fa-cog me-2 text-muted"></i>Admin Panel
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item py-2" href="/admin/services">
+                                    <i class="fas fa-bell me-2 text-muted"></i>Service Requests
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item py-2" href="/admin/coupons">
+                                    <i class="fas fa-tags me-2 text-muted"></i>Manage Coupons
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item py-2" href="/admin/newsletter">
+                                    <i class="fas fa-envelope me-2 text-muted"></i>Newsletter
+                                </a>
+                            </li>
+                            {% endif %}
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <a class="dropdown-item py-2 text-danger" href="/logout">
+                                    <i class="fas fa-sign-out-alt me-2"></i>Logout
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                    {% else %}
+                    
+                    <!-- Login/Register (Logged Out) -->
+                    <li class="nav-item ms-2">
+                        <a class="nav-link fw-medium" href="/login">Login</a>
+                    </li>
+                    <li class="nav-item ms-2">
+                        <a class="btn btn-primary rounded-pill px-4 fw-medium shadow-sm" href="/register">
+                            Register
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <style>
+        .navbar-nav .nav-link {
+            color: #555;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+        .navbar-nav .nav-link:hover, .navbar-nav .nav-link.active {
+            color: var(--bs-primary);
+        }
+        .icon-link {
+            color: #555;
+            transition: transform 0.2s;
+        }
+        .icon-link:hover {
+            color: var(--bs-primary);
+            transform: translateY(-2px);
+        }
+        .dropdown-item:active {
+            background-color: var(--bs-primary);
+        }
+        @media (max-width: 991px) {
+            .navbar-collapse {
+                background: white;
+                padding: 1rem;
+                border-radius: 1rem;
+                margin-top: 1rem;
+                box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            }
+        }
+    </style>
+    
+    {% if current_user.is_authenticated and current_user.is_admin %}
+    <script>
+        setInterval(function() {
+            fetch('/api/admin/notifications')
+                .then(response => response.json())
+                .then(data => {
+                    const badge = document.getElementById('serviceBadge');
+                    if (data.services > 0) {
+                        badge.innerText = data.services;
+                        badge.classList.remove('d-none');
+                    } else {
+                        badge.classList.add('d-none');
+                    }
+                })
+                .catch(err => console.log(err));
+        }, 10000); // Check every 10 seconds
+    </script>
+    {% endif %}

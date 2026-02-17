@@ -1,0 +1,195 @@
+{% extends "base.html" %}
+
+{% block title %}Kitchen Display System - FoodieExpress{% endblock %}
+
+{% block extra_css %}
+<style>
+    .kds-container {
+        background-color: #f8f9fa;
+        min-height: calc(100vh - 70px);
+    }
+    
+    .order-card {
+        transition: all 0.3s ease;
+        border: none;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    
+    .order-card.status-confirmed {
+        border-top: 5px solid #0d6efd;
+    }
+    
+    .order-card.status-preparing {
+        border-top: 5px solid #ffc107;
+        background-color: #fffbf0;
+    }
+    
+    .timer-badge {
+        font-family: monospace;
+        font-size: 1.1em;
+    }
+    
+    .item-row {
+        border-bottom: 1px dashed #dee2e6;
+        padding: 8px 0;
+    }
+    
+    .item-row:last-child {
+        border-bottom: none;
+    }
+    
+    .qty-badge {
+        font-size: 1.1em;
+        width: 30px;
+        display: inline-block;
+        text-align: center;
+    }
+    
+    .animate-in {
+        animation: fadeIn 0.5s ease-in;
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4 kds-container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-0"><i class="fas fa-tv me-2"></i>Kitchen Display System</h2>
+            <p class="text-muted mb-0">Live orders auto-refresh every 10 seconds</p>
+        </div>
+        <div class="d-flex gap-3 align-items-center">
+            <div class="d-flex align-items-center gap-2">
+                <span class="badge bg-primary p-2">Confirmed</span>
+                <span class="badge bg-warning text-dark p-2">Preparing</span>
+            </div>
+            <div id="last-updated" class="text-muted small"></div>
+        </div>
+    </div>
+
+    <div id="orders-grid" class="row g-4">
+        <!-- Orders will be populated here via JS -->
+        <div class="col-12 text-center py-5 loading-spinner">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function formatTimeAgo(dateString) {
+        const date = new Date(dateString);
+        const now = new Date();
+        const diffInSeconds = Math.floor((now - date) / 1000);
+        
+        if (diffInSeconds < 60) return 'Just now';
+        const minutes = Math.floor(diffInSeconds / 60);
+        return `${minutes} min ago`;
+    }
+
+    function createOrderCard(order) {
+        const itemsHtml = order.items.map(item => `
+            <div class="item-row">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <span class="badge bg-secondary qty-badge me-2">${item.quantity}</span>
+                        <span class="fw-bold">${item.name}</span>
+                    </div>
+                </div>
+                ${item.special_instructions ? `<div class="text-danger small ms-5 mt-1"><i class="fas fa-exclamation-circle me-1"></i>${item.special_instructions}</div>` : ''}
+            </div>
+        `).join('');
+
+        const actionBtn = order.status === 'confirmed' 
+            ? `<button onclick="updateStatus(${order.id}, 'preparing')" class="btn btn-primary w-100"><i class="fas fa-fire me-2"></i>Start Preparing</button>`
+            : `<button onclick="updateStatus(${order.id}, 'delivered')" class="btn btn-success w-100"><i class="fas fa-check me-2"></i>Mark Ready</button>`;
+
+        const statusBadge = order.status === 'confirmed'
+            ? '<span class="badge bg-primary">Confirmed</span>'
+            : '<span class="badge bg-warning text-dark">Preparing</span>';
+
+        return `
+            <div class="col-md-6 col-lg-4 col-xl-3 animate-in" id="order-${order.id}">
+                <div class="card h-100 order-card status-${order.status}">
+                    <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+                        <h5 class="mb-0">#${order.order_number}</h5>
+                        <span class="badge bg-dark timer-badge"><i class="far fa-clock me-1"></i>${formatTimeAgo(order.created_at)}</span>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3 pb-2 border-bottom">
+                            <div class="d-flex justify-content-between mb-1">
+                                <small class="text-muted">Location:</small>
+                                <span class="fw-bold">${order.location}</span>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <small class="text-muted">Customer:</small>
+                                <span>${order.customer}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="items-list mb-3">
+                            ${itemsHtml}
+                        </div>
+
+                        ${order.special_instructions ? `
+                            <div class="alert alert-warning py-2 px-3 mb-3 small">
+                                <strong>Note:</strong> ${order.special_instructions}
+                            </div>
+                        ` : ''}
+                    </div>
+                    <div class="card-footer bg-white border-top-0 pb-3">
+                        ${actionBtn}
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    function fetchOrders() {
+        fetch('/api/kds/orders')
+            .then(response => response.json())
+            .then(data => {
+                const grid = document.getElementById('orders-grid');
+                
+                if (data.length === 0) {
+                    grid.innerHTML = `
+                        <div class="col-12 text-center py-5">
+                            <i class="fas fa-check-circle fa-4x text-success mb-3 opacity-50"></i>
+                            <h3>All Caught Up!</h3>
+                            <p class="text-muted">No active orders at the moment.</p>
+                        </div>`;
+                } else {
+                    // Simple re-render strategy (can be optimized to diff DOM if needed)
+                    grid.innerHTML = data.map(order => createOrderCard(order)).join('');
+                }
+                
+                document.getElementById('last-updated').textContent = 'Updated: ' + new Date().toLocaleTimeString();
+            })
+            .catch(error => console.error('Error fetching orders:', error));
+    }
+
+    function updateStatus(orderId, newStatus) {
+        fetch(`/admin/orders/update/${orderId}`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({status: newStatus})
+        }).then(res => res.json()).then(data => {
+            if(data.success) fetchOrders(); // Refresh immediately
+        });
+    }
+
+    // Initial load
+    fetchOrders();
+    
+    // Auto-refresh every 10 seconds
+    setInterval(fetchOrders, 10000);
+</script>
+{% endblock %}

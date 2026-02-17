@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% block title %}Create Coupon - FoodieExpress{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">Create New Coupon</h4>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        {{ form.hidden_tag() }}
+                        
+                        <div class="mb-3">
+                            {{ form.code.label(class="form-label") }}
+                            {{ form.code(class="form-control text-uppercase", placeholder="e.g. SUMMER20") }}
+                            {% for error in form.code.errors %}
+                                <span class="text-danger small">{{ error }}</span>
+                            {% endfor %}
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                {{ form.discount_type.label(class="form-label") }}
+                                {{ form.discount_type(class="form-select") }}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                {{ form.value.label(class="form-label") }}
+                                {{ form.value(class="form-control", placeholder="e.g. 20") }}
+                                {% for error in form.value.errors %}
+                                    <span class="text-danger small">{{ error }}</span>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                {{ form.valid_to.label(class="form-label") }}
+                                {{ form.valid_to(class="form-control", type="date") }}
+                                {% for error in form.valid_to.errors %}
+                                    <span class="text-danger small">{{ error }}</span>
+                                {% endfor %}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                {{ form.usage_limit.label(class="form-label") }}
+                                {{ form.usage_limit(class="form-control") }}
+                            </div>
+                        </div>
+
+                        <div class="mb-3 form-check">
+                            {{ form.active(class="form-check-input") }}
+                            {{ form.active.label(class="form-check-label") }}
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">Create Coupon</button>
+                            <a href="{{ url_for('manage_coupons') }}" class="btn btn-secondary">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

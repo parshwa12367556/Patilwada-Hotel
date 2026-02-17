@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+
+{% block title %}{{ food.name }} - FoodieExpress{% endblock %}
+
+{% block extra_css %}
+<style>
+    .food-detail-img {
+        width: 100%;
+        height: 450px;
+        object-fit: cover;
+    }
+    .related-food-card img {
+        height: 150px;
+        object-fit: cover;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row g-5">
+        <div class="col-md-6">
+            <img src="{{ url_for('static', filename='uploads/' + food.image) }}" alt="{{ food.name }}" class="img-fluid rounded shadow-lg food-detail-img">
+        </div>
+        <div class="col-md-6">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('menu') }}">Menu</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('menu', category=food.category) }}">{{ food.category|title }}</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">{{ food.name }}</li>
+                </ol>
+            </nav>
+            <h1 class="fw-bold display-5">{{ food.name }}</h1>
+            <p class="h2 text-primary fw-bold my-3">₹{{ "%.2f"|format(food.price) }}</p>
+            <p class="lead">{{ food.description }}</p>
+
+            <hr class="my-4">
+
+            <form id="add-to-cart-form">
+                <div class="row align-items-end g-3">
+                    <div class="col-md-4">
+                        <label for="quantity" class="form-label fw-bold">Quantity</label>
+                        <input type="number" id="quantity" name="quantity" class="form-control form-control-lg" value="1" min="1" max="10">
+                    </div>
+                    <div class="col-md-8">
+                        <button type="submit" class="btn btn-primary btn-lg w-100" id="add-to-cart-btn">
+                            <span class="btn-text"><i class="fas fa-cart-plus me-2"></i>Add to Cart</span>
+                            <span class="btn-loading-text d-none"><i class="fas fa-spinner fa-spin"></i> Adding...</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="my-3">
+                    <label for="instructions" class="form-label fw-bold">Special Instructions (Optional)</label>
+                    <textarea id="instructions" name="instructions" class="form-control" rows="2" placeholder="e.g., extra spicy, no onions"></textarea>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Related Foods -->
+    {% if related_foods %}
+    <div class="mt-5 pt-5 border-top">
+        <h3 class="mb-4 fw-bold">You might also like</h3>
+        <div class="row g-4">
+            {% for related in related_foods %}
+            <div class="col-md-3">
+                <div class="card h-100 shadow-sm related-food-card">
+                    <img src="{{ url_for('static', filename='uploads/' + related.image) }}" class="card-img-top" alt="{{ related.name }}">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ related.name }}</h5>
+                        <p class="card-text text-primary fw-bold">₹{{ "%.2f"|format(related.price) }}</p>
+                        <a href="{{ url_for('food_details', food_id=related.id) }}" class="stretched-link"></a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    $('#add-to-cart-form').submit(function(e) {
+        e.preventDefault();
+        const foodId = { food:id };
+        const button = $('#add-to-cart-btn');
+        
+        button.prop('disabled', true);
+        button.find('.btn-text').addClass('d-none');
+        button.find('.btn-loading-text').removeClass('d-none');
+
+        $.ajax({
+            url: '/add-to-cart/' + foodId,
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({
+                quantity: $('#quantity').val(),
+                instructions: $('#instructions').val()
+            }),
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+            success: function(response) {
+                if (response.success) {
+                    $('#cart-nav-count').text(response.cart_count);
+                    button.removeClass('btn-primary').addClass('btn-success');
+                    button.find('.btn-loading-text').html('<i class="fas fa-check"></i> Added!');
+                    
+                    setTimeout(function() {
+                        button.prop('disabled', false).removeClass('btn-success').addClass('btn-primary');
+                        button.find('.btn-text').removeClass('d-none');
+                        button.find('.btn-loading-text').addClass('d-none').html('<i class="fas fa-spinner fa-spin"></i> Adding...');
+                    }, 2000);
+                }
+            },
+            error: function(xhr) {
+                if (xhr.status === 401) {
+                    window.location.href = '/login';
+                } else {
+                    alert('Could not add item to cart.');
+                }
+                button.prop('disabled', false);
+                button.find('.btn-text').removeClass('d-none');
+                button.find('.btn-loading-text').addClass('d-none');
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

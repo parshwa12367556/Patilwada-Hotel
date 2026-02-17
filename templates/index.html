@@ -1,0 +1,509 @@
+{% extends "base.html" %}
+
+{% block title %}HotelServe - In-Room Dining{% endblock %}
+
+{% block extra_css %}
+    <style>
+        .hero-section {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 120px 0 100px;
+            position: relative;
+            overflow: hidden;
+            border-radius: 0 0 50px 50px;
+            margin-bottom: 60px;
+        }
+        
+        .hero-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle at top right, rgba(255,255,255,0.1) 0%, transparent 40%),
+                        radial-gradient(circle at bottom left, rgba(255,255,255,0.1) 0%, transparent 40%);
+            opacity: 0.3;
+        }
+
+        .category-card {
+            border: none;
+            border-radius: 20px;
+            background: white;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            transition: all 0.3s ease;
+            padding: 30px 20px;
+            height: 100%;
+            text-decoration: none;
+            display: block;
+        }
+        
+        .category-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+        }
+
+        .category-icon {
+            width: 80px;
+            height: 80px;
+            background: #f8f9fa;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            transition: all 0.3s;
+            color: #667eea;
+        }
+        
+        .category-card:hover .category-icon {
+            background: #667eea;
+            color: white;
+        }
+        
+        .food-card {
+            border: none;
+            border-radius: 20px;
+            background: white;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.03);
+            transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+            height: 100%;
+            overflow: hidden;
+        }
+        
+        .food-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.08);
+        }
+        
+        .food-img-wrapper {
+            height: 220px;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .food-img-wrapper img {
+            transition: transform 0.6s ease;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .food-card:hover .food-img-wrapper img {
+            transform: scale(1.08);
+        }
+
+        .step-icon {
+            width: 90px;
+            height: 90px;
+            line-height: 90px;
+            font-size: 2.5rem;
+            background: white;
+            color: #667eea;
+            border-radius: 50%;
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.2);
+            margin: 0 auto 25px;
+            position: relative;
+            z-index: 2;
+        }
+        
+        .step-card {
+            text-align: center;
+            padding: 40px 30px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            height: 100%;
+            transition: transform 0.3s ease;
+        }
+        
+        .step-card:hover {
+            transform: translateY(-10px);
+        }
+        
+        .btn-hero {
+            background: white;
+            color: #667eea;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 50px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        
+        .btn-hero:hover {
+            background: #f8f9fa;
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+            color: #764ba2;
+        }
+
+        .btn-add-cart {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+            padding: 0;
+            background: #667eea;
+            color: white;
+            border: none;
+        }
+        
+        .btn-add-cart:hover {
+            transform: rotate(90deg);
+            background: #764ba2;
+            color: white;
+        }
+
+        .offer-section {
+            background: linear-gradient(45deg, #ff6b6b, #ff8e53);
+            color: white;
+            border-radius: 20px;
+            padding: 60px 40px;
+            margin: 60px 0;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 20px 40px rgba(255, 107, 107, 0.3);
+        }
+        
+        .offer-section::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            left: 0;
+            background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+        }
+
+        .testimonial-card {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            height: 100%;
+            position: relative;
+            transition: transform 0.3s;
+        }
+
+        .testimonial-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .quote-icon {
+            font-size: 2rem;
+            color: #667eea;
+            opacity: 0.2;
+            position: absolute;
+            top: 20px;
+            right: 30px;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    
+    <!-- Hero Section -->
+    <section class="hero-section">
+        <div class="container text-center position-relative" style="z-index: 2;">
+            <h1 class="display-3 fw-bold mb-4">Dining Reimagined</h1>
+            <p class="lead mb-5 opacity-75 fs-4">Experience 5-star culinary delights delivered directly to your table.</p>
+            <div class="d-flex justify-content-center gap-3">
+                <a href="/menu" class="btn btn-hero shadow-lg">
+                    <i class="fas fa-utensils me-2"></i>Explore Menu
+                </a>
+                <a href="#featured" class="btn btn-outline-light btn-lg px-5 rounded-pill border-2 fw-bold">
+                    <i class="fas fa-concierge-bell me-2"></i>Services
+                </a>
+            </div>
+            
+            <!-- Stats -->
+            <div class="row mt-5 pt-4 justify-content-center">
+                <div class="col-md-4">
+                    <div class="p-3">
+                        <i class="fas fa-clock fa-2x mb-3 opacity-75"></i>
+                        <h3 class="fw-bold">24/7</h3>
+                        <p class="opacity-75">Service Available</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="p-3">
+                        <i class="fas fa-award fa-2x mb-3 opacity-75"></i>
+                        <h3 class="fw-bold">5 Star</h3>
+                        <p class="opacity-75">Culinary Experience</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="p-3">
+                        <i class="fas fa-stopwatch fa-2x mb-3 opacity-75"></i>
+                        <h3 class="fw-bold">30 min</h3>
+                        <p class="opacity-75">Average Service Time</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Categories Section -->
+    <section class="py-5 mb-5">
+        <div class="container">
+            <div class="text-center mb-5">
+                <h2 class="fw-bold display-6">Explore Categories</h2>
+                <p class="text-muted">Explore our diverse culinary offerings</p>
+            </div>
+            
+            <div class="row g-4">
+                <!-- Pizza Category -->
+                <div class="col-lg-3 col-6">
+                    <a href="/menu?category=breakfast" class="category-card text-center">
+                        <div class="category-icon">
+                            <i class="fas fa-coffee fa-2x"></i>
+                        </div>
+                        <h5 class="fw-bold text-dark mb-1">Breakfast</h5>
+                        <p class="text-muted small mb-0">Start your day right</p>
+                    </a>
+                </div>
+                
+                <!-- Burger Category -->
+                <div class="col-lg-3 col-6">
+                    <a href="/menu?category=main-course" class="category-card text-center">
+                        <div class="category-icon">
+                            <i class="fas fa-utensils fa-2x"></i>
+                        </div>
+                        <h5 class="fw-bold text-dark mb-1">Main Course</h5>
+                        <p class="text-muted small mb-0">Hearty meals</p>
+                    </a>
+                </div>
+                
+                <!-- South Indian Category -->
+                <div class="col-lg-3 col-6">
+                    <a href="/menu?category=beverages" class="category-card text-center">
+                        <div class="category-icon">
+                            <i class="fas fa-glass-martini-alt fa-2x"></i>
+                        </div>
+                        <h5 class="fw-bold text-dark mb-1">Beverages</h5>
+                        <p class="text-muted small mb-0">Refresh yourself</p>
+                    </a>
+                </div>
+                
+                <!-- Chinese Category -->
+                <div class="col-lg-3 col-6">
+                    <a href="/menu?category=desserts" class="category-card text-center">
+                        <div class="category-icon">
+                            <i class="fas fa-ice-cream fa-2x"></i>
+                        </div>
+                        <h5 class="fw-bold text-dark mb-1">Desserts</h5>
+                        <p class="text-muted small mb-0">Sweet treats</p>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Featured Foods -->
+    <section id="featured" class="py-5 bg-light position-relative">
+        <div class="container">
+            <div class="text-center mb-5">
+                <h2 class="fw-bold display-6">Chef's Specials</h2>
+                <p class="text-muted">Curated selection for our guests</p>
+            </div>
+            
+            <div class="row g-4">
+                {% for food in featured_foods %}
+                <div class="col-lg-3 col-md-4 col-sm-6">
+                    <div class="card food-card h-100">
+                        <div class="food-img-wrapper">
+                            <img src="{{ url_for('static', filename='uploads/' + food.image) }}" alt="{{ food.name }}">
+                            <div class="position-absolute top-0 end-0 m-3">
+                                <span class="badge bg-white text-dark shadow-sm rounded-pill px-3 py-2">
+                                    ₹{{ "%.0f"|format(food.price) }}
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <div class="card-body d-flex flex-column pt-4">
+                            <div class="mb-2">
+                                <span class="text-uppercase text-muted small fw-bold" style="font-size: 0.7rem; letter-spacing: 1px;">{{ food.category }}</span>
+                            </div>
+                            <h5 class="card-title fw-bold mb-3 text-dark">{{ food.name }}</h5>
+                            
+                            <div class="d-flex justify-content-between align-items-center mt-auto">
+                                <a href="{{ url_for('food_details', food_id=food.id) }}" class="text-decoration-none text-dark fw-bold small stretched-link">
+                                    View Details <i class="fas fa-arrow-right ms-1"></i>
+                                </a>
+                                <button class="btn btn-add-cart add-to-cart position-relative" style="z-index: 2;" data-food-id="{{ food.id }}">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            
+            <div class="text-center mt-5">
+                <a href="/menu" class="btn btn-outline-dark rounded-pill px-5 py-3 fw-bold">
+                    View Full Menu <i class="fas fa-arrow-right ms-2"></i>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Special Offer -->
+    {% if active_coupon %}
+    <div class="container">
+        <div class="offer-section text-center">
+            <div class="position-relative" style="z-index: 2;">
+                <h2 class="display-5 fw-bold mb-3">Special Offer!</h2>
+                <p class="lead mb-4">
+                    Get 
+                    {% if active_coupon.discount_type == 'percentage' %}
+                        {{ active_coupon.value|int }}% OFF
+                    {% else %}
+                        ₹{{ active_coupon.value|int }} OFF
+                    {% endif %}
+                    on your order!
+                </p>
+                <div class="d-inline-block bg-white text-dark px-4 py-2 rounded-pill fw-bold mb-3 shadow-sm">
+                    Use Code: <span class="text-primary">{{ active_coupon.code }}</span>
+                </div>
+                <br>
+                <a href="/menu" class="btn btn-outline-light rounded-pill px-5 mt-2 fw-bold border-2">Order Now</a>
+                <div class="mt-2 small opacity-75">Valid until {{ active_coupon.valid_to.strftime('%d %b %Y') }}</div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- How It Works -->
+    <section class="py-5 my-5">
+        <div class="container">
+            <div class="text-center mb-5">
+                <h2 class="fw-bold display-6">Seamless Experience</h2>
+                <p class="text-muted">Seamless dining experience at your fingertips</p>
+            </div>
+            
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <div class="step-card">
+                        <div class="step-icon">
+                        <i class="fas fa-qrcode"></i>
+                    </div>
+                        <h4 class="fw-bold">1. Scan & Browse</h4>
+                    <p class="text-muted">Scan the QR code from the table to access our digital menu instantly.</p>
+                </div>
+                </div>
+                
+                <div class="col-md-4">
+                    <div class="step-card">
+                        <div class="step-icon">
+                        <i class="fas fa-concierge-bell"></i>
+                    </div>
+                        <h4 class="fw-bold">2. Place Order</h4>
+                    <p class="text-muted">Select your items and confirm your table number for service.</p>
+                </div>
+                </div>
+                
+                <div class="col-md-4">
+                    <div class="step-card">
+                        <div class="step-icon">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                        <h4 class="fw-bold">3. Enjoy</h4>
+                    <p class="text-muted">Our staff will serve your meal directly to your or table.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Testimonials -->
+    <section class="py-5 bg-light">
+        <div class="container">
+            <div class="text-center mb-5">
+                <h2 class="fw-bold display-6">Guest Reviews</h2>
+                <p class="text-muted">What our guests are saying about us</p>
+            </div>
+            
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <div class="testimonial-card">
+                        <i class="fas fa-quote-right quote-icon"></i>
+                        <div class="mb-3 text-warning">
+                            <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
+                        </div>
+                        <p class="text-muted mb-4">"The Butter Chicken was absolutely divine! Delivery was super fast and the food was piping hot. Great service!"</p>
+                        <h6 class="mb-0 fw-bold">Rahul Sharma</h6>
+                        <small class="text-muted">Room 302</small>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="testimonial-card">
+                        <i class="fas fa-quote-right quote-icon"></i>
+                        <div class="mb-3 text-warning">
+                            <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star-half-alt"></i>
+                        </div>
+                        <p class="text-muted mb-4">"Loved the digital ordering system. Very convenient and the staff was very polite. The desserts are a must-try!"</p>
+                        <h6 class="mb-0 fw-bold">Priya Patel</h6>
+                        <small class="text-muted">Table 5</small>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="testimonial-card">
+                        <i class="fas fa-quote-right quote-icon"></i>
+                        <div class="mb-3 text-warning">
+                            <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
+                        </div>
+                        <p class="text-muted mb-4">"Breakfast in bed was the highlight of my stay. The coffee was fresh and the continental spread was perfect."</p>
+                        <h6 class="mb-0 fw-bold">Amit Kumar</h6>
+                        <small class="text-muted">Room 105</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+{% endblock %}
+    
+{% block extra_js %}
+    <script>
+        $(document).ready(function() {
+            $('.add-to-cart').click(function(e) {
+                // This prevents the click from triggering the parent `<a>` tag's navigation
+                e.preventDefault(); 
+                e.stopPropagation();
+
+                const foodId = $(this).data('food-id');
+                const button = $(this);
+                
+                button.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i>');
+
+                $.ajax({
+                    url: '/add-to-cart/' + foodId,
+                    method: 'POST',
+                    data: JSON.stringify({ quantity: 1 }), // Default quantity
+                    contentType: 'application/json',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    success: function(response) {
+                        $('#cart-nav-count').text(response.cart_count);
+                        button.addClass('btn-success').html('<i class="fas fa-check"></i>');
+                        
+                        setTimeout(function() {
+                            button.prop('disabled', false).removeClass('btn-success').html('<i class="fas fa-plus"></i>');
+                        }, 1000);
+                    },
+                    error: function(xhr) {
+                        if (xhr.status === 401) {
+                            window.location.href = '/login';
+                        } else {
+                            button.prop('disabled', false).html('<i class="fas fa-plus"></i>');
+                        }
+                    }
+                });
+            });
+        });
+    </script>
+{% endblock %}

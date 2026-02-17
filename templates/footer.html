@@ -1,0 +1,203 @@
+    <footer class="footer-section mt-auto">
+        <div class="container position-relative" style="z-index: 2;">
+            <div class="row g-4">
+                <!-- About Section -->
+                <div class="col-lg-4 col-md-6 mb-4 mb-md-0">
+                    <div class="d-flex align-items-center mb-4">
+                        <div class="brand-icon bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 40px; height: 40px;">
+                            <i class="fas fa-concierge-bell"></i>
+                        </div>
+                        <span class="fw-bold text-white fs-4">HotelServe</span>
+                    </div>
+                    <p class="text-white-50 mb-4">
+                        Elevating your in-room dining experience with exquisite cuisine delivered directly to your table. 24/7 service at your fingertips.
+                    </p>
+                    <div class="social-links">
+                        <a href="#" class="social-btn"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#" class="social-btn"><i class="fab fa-twitter"></i></a>
+                        <a href="#" class="social-btn"><i class="fab fa-instagram"></i></a>
+                        <a href="#" class="social-btn"><i class="fab fa-linkedin-in"></i></a>
+                    </div>
+                </div>
+                
+                <!-- Quick Links -->
+                <div class="col-lg-2 col-md-6 mb-4 mb-md-0">
+                    <h5 class="text-white mb-4 fw-bold">Quick Links</h5>
+                    <ul class="list-unstyled">
+                        <li class="mb-2">
+                            <a href="/" class="footer-link">Home</a>
+                        </li>
+                        <li class="mb-2">
+                            <a href="/menu" class="footer-link">Menu</a>
+                        </li>
+                        <li class="mb-2">
+                            <a href="/my-orders" class="footer-link">My Orders</a>
+                        </li>
+                        <li class="mb-2">
+                            <a href="/services" class="footer-link">Services</a>
+                        </li>
+                    </ul>
+                </div>
+                
+                <!-- Contact Info -->
+                <div class="col-lg-3 col-md-6 mb-4 mb-md-0">
+                    <h5 class="text-white mb-4 fw-bold">Contact Us</h5>
+                    <ul class="list-unstyled text-white-50">
+                        <li class="mb-3 d-flex">
+                            <i class="fas fa-map-marker-alt mt-1 me-3 text-white"></i>
+                            <span>123 Hotel Avenue, Mumbai - 400001</span>
+                        </li>
+                        <li class="mb-3 d-flex">
+                            <i class="fas fa-phone mt-1 me-3 text-white"></i>
+                            <span>+91 98765 43210</span>
+                        </li>
+                        <li class="mb-3 d-flex">
+                            <i class="fas fa-envelope mt-1 me-3 text-white"></i>
+                            <span>concierge@hotelserve.com</span>
+                        </li>
+                    </ul>
+                </div>
+                
+                <!-- Newsletter -->
+                <div class="col-lg-3 col-md-6">
+                    <h5 class="text-white mb-4 fw-bold">Newsletter</h5>
+                    <p class="text-white-50 mb-4">Subscribe to receive exclusive offers and updates.</p>
+                    <form id="newsletterForm" class="mb-3">
+                        <div class="input-group bg-white bg-opacity-10 border border-white border-opacity-25 rounded-pill p-1">
+                            <input type="email" id="newsletterEmail" name="email" class="form-control border-0 bg-transparent text-white ps-3" placeholder="Your Email" style="box-shadow: none;" required>
+                            <button class="btn btn-light rounded-pill px-4 text-primary fw-bold" type="submit">
+                                <i class="fas fa-paper-plane"></i>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Copyright -->
+            <div class="border-top border-white border-opacity-25 mt-5 pt-4">
+                <div class="row align-items-center">
+                    <div class="col-md-6 text-center text-md-start mb-3 mb-md-0">
+                        <p class="text-white-50 small mb-0">&copy; 2024 HotelServe. All rights reserved.</p>
+                    </div>
+                    <div class="col-md-6 text-center text-md-end">
+                        <ul class="list-inline mb-0 small">
+                            <li class="list-inline-item"><a href="#" class="text-white-50 text-decoration-none">Privacy Policy</a></li>
+                            <li class="list-inline-item ms-3"><a href="#" class="text-white-50 text-decoration-none">Terms of Service</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <style>
+        .footer-section {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #fff;
+            padding: 80px 0 30px;
+            margin-top: 80px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .footer-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle at top right, rgba(255,255,255,0.1) 0%, transparent 40%),
+                        radial-gradient(circle at bottom left, rgba(255,255,255,0.1) 0%, transparent 40%);
+            opacity: 0.3;
+            pointer-events: none;
+        }
+
+        .footer-link {
+            color: rgba(255,255,255,0.7);
+            text-decoration: none;
+            transition: all 0.3s ease;
+            display: inline-block;
+        }
+        
+        .footer-link:hover {
+            color: #fff;
+            transform: translateX(5px);
+            text-decoration: none;
+        }
+        
+        .social-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            background: rgba(255,255,255,0.1);
+            color: #fff;
+            border-radius: 50%;
+            margin-right: 10px;
+            transition: all 0.3s ease;
+            text-decoration: none;
+        }
+        
+        .social-btn:hover {
+            background: #fff;
+            color: #764ba2;
+            transform: translateY(-3px);
+        }
+        
+        .form-control::placeholder {
+            color: rgba(255,255,255,0.5);
+        }
+    </style>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const newsletterForm = document.getElementById('newsletterForm');
+            if (newsletterForm) {
+                newsletterForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    const emailInput = document.getElementById('newsletterEmail');
+                    const btn = this.querySelector('button');
+                    const originalContent = btn.innerHTML;
+                    
+                    if (!emailInput.value) return;
+
+                    btn.disabled = true;
+                    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+                    
+                    const formData = new FormData();
+                    formData.append('email', emailInput.value);
+                    
+                    fetch('/subscribe', {
+                        method: 'POST',
+                        body: formData
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if(data.success) {
+                            btn.innerHTML = '<i class="fas fa-check"></i>';
+                            btn.classList.remove('btn-light', 'text-primary');
+                            btn.classList.add('btn-success', 'text-white');
+                            emailInput.value = '';
+                            setTimeout(() => {
+                                btn.innerHTML = originalContent;
+                                btn.classList.add('btn-light', 'text-primary');
+                                btn.classList.remove('btn-success', 'text-white');
+                                btn.disabled = false;
+                            }, 3000);
+                        } else {
+                            alert(data.message);
+                            btn.innerHTML = originalContent;
+                            btn.disabled = false;
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        btn.innerHTML = originalContent;
+                        btn.disabled = false;
+                    });
+                });
+            }
+        });
+    </script>

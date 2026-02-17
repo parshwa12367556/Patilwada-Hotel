@@ -1,0 +1,294 @@
+{% extends "base.html" %}
+
+{% block title %}Menu - FoodieExpress{% endblock %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="/static/css/menu.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        
+        .menu-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 80px 0 100px;
+            position: relative;
+            margin-bottom: -50px;
+            border-radius: 0 0 50px 50px;
+            overflow: hidden;
+        }
+        
+        .menu-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle at top right, rgba(255,255,255,0.1) 0%, transparent 40%),
+                        radial-gradient(circle at bottom left, rgba(255,255,255,0.1) 0%, transparent 40%);
+            opacity: 0.3;
+        }
+
+        .filter-container {
+            overflow-x: auto;
+            white-space: nowrap;
+            padding: 10px 5px 20px;
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+            text-align: center;
+        }
+        
+        .filter-container::-webkit-scrollbar {
+            display: none;
+        }
+        
+        .category-pill {
+            display: inline-block;
+            padding: 12px 25px;
+            margin: 0 8px;
+            background: white;
+            border: none;
+            border-radius: 50px;
+            color: #666;
+            font-weight: 500;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+        
+        .category-pill:hover,
+        .category-pill.active {
+            background: #667eea;
+            color: white;
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+        }
+        
+        .food-card {
+            border: none;
+            border-radius: 20px;
+            background: white;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.03);
+            transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+            height: 100%;
+            overflow: hidden;
+        }
+        
+        .food-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.08);
+        }
+        
+        .pagination .page-link {
+            color: #333;
+            border: none;
+            margin: 0 6px;
+            border-radius: 50% !important;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        
+        .pagination .page-item.active .page-link {
+            background: #667eea;
+            border-color: #667eea;
+            color: white;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        
+        .food-img-wrapper {
+            height: 220px;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .food-img-wrapper img {
+            transition: transform 0.6s ease;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .food-card:hover .food-img-wrapper img {
+            transform: scale(1.08);
+        }
+        
+        .btn-add-cart {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+            padding: 0;
+            background: #667eea;
+            color: white;
+        }
+        
+        .btn-add-cart:hover {
+            transform: rotate(90deg);
+            background: #764ba2;
+            color: white;
+        }
+        
+        .description-truncate {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        @media (max-width: 768px) {
+            .menu-header {
+                padding: 60px 0 80px;
+            }
+            .display-4 {
+                font-size: 2.5rem;
+            }
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <!-- Menu Header -->
+    <div class="menu-header">
+        <div class="container text-center position-relative" style="z-index: 2;">
+            <h1 class="display-4 fw-bold mb-2">Discover Flavor</h1>
+            <p class="lead opacity-75">Curated dishes for your dining pleasure</p>
+        </div>
+    </div>
+    
+    <!-- Filter Section -->
+    <div class="container position-relative" style="z-index: 3;">
+        <div class="filter-container">
+            <a href="/menu?category=all" class="category-pill {% if current_category == 'all' %}active{% endif %}">All Items</a>
+            <a href="/menu?category=pizza" class="category-pill {% if current_category == 'pizza' %}active{% endif %}">Pizza</a>
+            <a href="/menu?category=burger" class="category-pill {% if current_category == 'burger' %}active{% endif %}">Burger</a>
+            <a href="/menu?category=south-indian" class="category-pill {% if current_category == 'south-indian' %}active{% endif %}">South Indian</a>
+            <a href="/menu?category=north-indian" class="category-pill {% if current_category == 'north-indian' %}active{% endif %}">North Indian</a>
+            <a href="/menu?category=chinese" class="category-pill {% if current_category == 'chinese' %}active{% endif %}">Chinese</a>
+            <a href="/menu?category=beverages" class="category-pill {% if current_category == 'beverages' %}active{% endif %}">Beverages</a>
+            <a href="/menu?category=desserts" class="category-pill {% if current_category == 'desserts' %}active{% endif %}">Desserts</a>
+        </div>
+    </div>
+    
+    <!-- Menu Items -->
+    <div class="container py-5">
+        <!-- Results Count -->
+        <div class="d-flex justify-content-between align-items-center mb-4 px-2">
+            <h5 class="fw-bold mb-0 text-dark">
+                {% if current_category != 'all' %}{{ current_category|title }}{% else %}All Dishes{% endif %}
+            </h5>
+            <span class="text-muted small">{{ foods.total }} results</span>
+        </div>
+        
+        <!-- Food Grid -->
+        <div class="row g-4">
+            {% for food in foods.items %}
+            <div class="col-lg-3 col-md-4 col-sm-6">
+                <div class="card food-card h-100">
+                    <div class="food-img-wrapper">
+                        <img src="{{ url_for('static', filename='uploads/' + food.image) }}" alt="{{ food.name }}">
+                        <div class="position-absolute top-0 end-0 m-3">
+                            <span class="badge bg-white text-dark shadow-sm rounded-pill px-3 py-2">
+                                ₹{{ "%.0f"|format(food.price) }}
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div class="card-body d-flex flex-column pt-4">
+                        <div class="mb-2">
+                            <span class="text-uppercase text-muted small fw-bold" style="font-size: 0.7rem; letter-spacing: 1px;">{{ food.category }}</span>
+                        </div>
+                        <h5 class="card-title fw-bold mb-3 text-dark">{{ food.name }}</h5>
+                        <p class="card-text text-muted small mb-4 flex-grow-1 description-truncate">
+                            {{ food.description }}
+                        </p>
+                        
+                        <div class="d-flex justify-content-between align-items-center mt-auto">
+                            <a href="{{ url_for('food_details', food_id=food.id) }}" class="text-decoration-none text-dark fw-bold small stretched-link">
+                                View Details <i class="fas fa-arrow-right ms-1"></i>
+                            </a>
+                            <button class="btn btn-add-cart add-to-cart position-relative" style="z-index: 2;" data-food-id="{{ food.id }}">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <!-- Pagination -->
+        <nav class="mt-5">
+            <ul class="pagination justify-content-center">
+                <li class="page-item {% if not foods.has_prev %}disabled{% endif %}">
+                    <a class="page-link" href="{{ url_for('menu', page=foods.prev_num, category=current_category, search=search_query) if foods.has_prev else '#' }}" tabindex="-1">Previous</a>
+                </li>
+                
+                {% for page_num in foods.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=2) %}
+                    {% if page_num %}
+                        <li class="page-item {% if page_num == foods.page %}active{% endif %}">
+                            <a class="page-link" href="{{ url_for('menu', page=page_num, category=current_category, search=search_query) }}">{{ page_num }}</a>
+                        </li>
+                    {% else %}
+                        <li class="page-item disabled"><span class="page-link">...</span></li>
+                    {% endif %}
+                {% endfor %}
+                
+                <li class="page-item {% if not foods.has_next %}disabled{% endif %}">
+                    <a class="page-link" href="{{ url_for('menu', page=foods.next_num, category=current_category, search=search_query) if foods.has_next else '#' }}">Next</a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+{% endblock %}
+    
+{% block extra_js %}
+    <script>
+        $(document).ready(function() {
+            $('.add-to-cart').click(function(e) {
+                // Prevent triggering the stretched-link
+                e.preventDefault();
+                e.stopPropagation();
+
+                const foodId = $(this).data('food-id');
+                const button = $(this);
+                
+                button.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i>');
+
+                $.ajax({
+                    url: '/add-to-cart/' + foodId,
+                    method: 'POST',
+                    data: JSON.stringify({ quantity: 1 }),
+                    contentType: 'application/json',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    success: function(response) {
+                        $('#cart-nav-count').text(response.cart_count);
+                        button.addClass('btn-success').html('<i class="fas fa-check"></i>');
+                        setTimeout(function() {
+                            button.prop('disabled', false).removeClass('btn-success').html('<i class="fas fa-plus"></i>');
+                        }, 1000);
+                    },
+                    error: function(xhr) {
+                        if (xhr.status === 401) {
+                            window.location.href = '/login';
+                        } else {
+                            button.prop('disabled', false).html('<i class="fas fa-plus"></i>');
+                        }
+                    }
+                });
+            });
+        });
+    </script>
+{% endblock %}

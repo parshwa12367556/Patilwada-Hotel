@@ -1,0 +1,194 @@
+{% extends "base.html" %}
+
+{% block title %}Checkout - HotelServe{% endblock %}
+
+{% block extra_css %}
+    <style>
+        .checkout-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px 0;
+            margin-bottom: 30px;
+        }
+        
+        .form-section {
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+        }
+        
+        .summary-card {
+            background: white;
+            border-radius: 10px;
+            padding: 25px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            position: sticky;
+            top: 100px;
+        }
+        
+        .mini-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .mini-item:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+        
+        .mini-item img {
+            width: 50px;
+            height: 50px;
+            object-fit: cover;
+            border-radius: 8px;
+            margin-right: 15px;
+        }
+        
+        .total-line {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            color: #666;
+        }
+        
+        .grand-total {
+            border-top: 2px dashed #dee2e6;
+            padding-top: 15px;
+            margin-top: 15px;
+            font-weight: 700;
+            font-size: 1.2rem;
+            color: #0d6efd;
+            display: flex;
+            justify-content: space-between;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <!-- Header -->
+    <div class="checkout-header">
+        <div class="container">
+            <h1 class="display-5 fw-bold mb-0">
+                <i class="fas fa-lock me-3"></i>Secure Checkout
+            </h1>
+            <p class="lead mb-0 mt-2">Complete your order details</p>
+        </div>
+    </div>
+
+    <div class="container py-4">
+        <div class="row">
+            <!-- Checkout Form -->
+            <div class="col-lg-8">
+                <form method="POST" action="">
+                    {{ form.hidden_tag() }}
+                    
+                    <!-- Delivery Details -->
+                    <div class="form-section">
+                        <h4 class="mb-4"><i class="fas fa-map-marker-alt me-2 text-primary"></i>Delivery Location</h4>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Full Name</label>
+                                {{ form.name(class="form-control", placeholder="Your Name") }}
+                                {% if form.name.errors %}
+                                    <div class="text-danger small mt-1">{{ form.name.errors[0] }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Phone Number</label>
+                                {{ form.phone(class="form-control", placeholder="Your Phone") }}
+                                {% if form.phone.errors %}
+                                    <div class="text-danger small mt-1">{{ form.phone.errors[0] }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Table Number</label>
+                                {{ form.location(class="form-control", placeholder="e.g. Table 5") }}
+                                {% if form.location.errors %}
+                                    <div class="text-danger small mt-1">{{ form.location.errors[0] }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Payment & Instructions -->
+                    <div class="form-section">
+                        <h4 class="mb-4"><i class="fas fa-credit-card me-2 text-primary"></i>Payment & Notes</h4>
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <label class="form-label">Payment Method</label>
+                                {{ form.payment_method(class="form-select") }}
+                                {% if form.payment_method.errors %}
+                                    <div class="text-danger small mt-1">{{ form.payment_method.errors[0] }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Special Instructions (Optional)</label>
+                                {{ form.special_instructions(class="form-control", rows=3, placeholder="Any allergies or special requests?") }}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-between align-items-center mt-4">
+                        <a href="{{ url_for('cart') }}" class="text-decoration-none text-muted">
+                            <i class="fas fa-arrow-left me-1"></i> Back to Cart
+                        </a>
+                        <button type="submit" class="btn btn-primary btn-lg px-5 rounded-pill shadow-sm">
+                            Place Order <i class="fas fa-check-circle ms-2"></i>
+                        </button>
+                    </div>
+                </form>
+            </div>
+            
+            <!-- Order Summary -->
+            <div class="col-lg-4 mt-4 mt-lg-0">
+                <div class="summary-card">
+                    <h5 class="mb-4">Order Summary</h5>
+                    
+                    <div class="mb-4" style="max-height: 300px; overflow-y: auto;">
+                        {% for item in cart_items %}
+                        <div class="mini-item">
+                            <img src="{{ url_for('static', filename='uploads/' + item.food.image) }}" alt="{{ item.food.name }}">
+                            <div class="flex-grow-1">
+                                <h6 class="mb-0 small fw-bold">{{ item.food.name }}</h6>
+                                <div class="small text-muted">Qty: {{ item.quantity }}</div>
+                            </div>
+                            <div class="fw-bold small">₹{{ "%.2f"|format(item.food.price * item.quantity) }}</div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    
+                    <div class="total-line">
+                        <span>Subtotal</span>
+                        <span>₹{{ "%.2f"|format(subtotal) }}</span>
+                    </div>
+                    <div class="total-line">
+                        <span>Delivery Charge</span>
+                        <span class="text-success">
+                            {% if delivery_charge > 0 %}
+                                ₹{{ "%.2f"|format(delivery_charge) }}
+                            {% else %}
+                                FREE
+                            {% endif %}
+                        </span>
+                    </div>
+                    
+                    <div class="grand-total">
+                        <span>Total Amount</span>
+                        <span>₹{{ "%.2f"|format(total) }}</span>
+                    </div>
+                    
+                    <div class="alert alert-light border mt-3 mb-0 small text-center">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Payment will be collected upon delivery
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

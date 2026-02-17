@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - FoodieExpress</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/static/css/style.css">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            padding: 20px 0;
+        }
+        
+        .register-container {
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        
+        .register-card {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+            animation: slideUp 0.5s ease;
+        }
+        
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .register-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .register-header img {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 20px;
+        }
+        
+        .register-header h3 {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        
+        .register-header p {
+            color: #666;
+            font-size: 0.9rem;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+            position: relative;
+        }
+        
+        .form-group i {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #666;
+            z-index: 1;
+        }
+        
+        .form-control {
+            padding: 12px 15px 12px 45px;
+            border: 2px solid #e1e1e1;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+        
+        .form-control:focus {
+            border-color: #667eea;
+            box-shadow: none;
+            outline: none;
+        }
+        
+        .form-control.is-invalid {
+            border-color: #dc3545;
+        }
+        
+        .invalid-feedback {
+            font-size: 0.85rem;
+            margin-top: 5px;
+        }
+        
+        .password-strength {
+            height: 5px;
+            margin-top: 5px;
+            border-radius: 5px;
+            background: #e1e1e1;
+            overflow: hidden;
+        }
+        
+        .password-strength-bar {
+            height: 100%;
+            width: 0;
+            transition: all 0.3s;
+        }
+        
+        .strength-weak {
+            background: #dc3545;
+            width: 33.33%;
+        }
+        
+        .strength-medium {
+            background: #ffc107;
+            width: 66.66%;
+        }
+        
+        .strength-strong {
+            background: #28a745;
+            width: 100%;
+        }
+        
+        .btn-register {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin: 20px 0;
+        }
+        
+        .btn-register:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102,126,234,0.4);
+        }
+        
+        .terms-check {
+            margin-bottom: 20px;
+        }
+        
+        .terms-check a {
+            color: #667eea;
+            text-decoration: none;
+        }
+        
+        .login-link {
+            text-align: center;
+            color: #666;
+        }
+        
+        .login-link a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        
+        .alert {
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .password-toggle {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: #666;
+            z-index: 2;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="register-container">
+            <!-- Register Card -->
+            <div class="register-card">
+                <!-- Header -->
+                <div class="register-header">
+                    <img src="/static/images/logo.png" alt="FoodieExpress">
+                    <h3>Create Account</h3>
+                    <p>Join FoodieExpress and start ordering</p>
+                </div>
+                
+                <!-- Alert Messages -->
+                <div class="alert alert-danger" role="alert" style="display: none;" id="errorAlert">
+                    <i class="fas fa-exclamation-circle me-2"></i>
+                    <span id="errorMessage"></span>
+                </div>
+                
+                <div class="alert alert-success" role="alert" style="display: none;" id="successAlert">
+                    <i class="fas fa-check-circle me-2"></i>
+                    <span id="successMessage"></span>
+                </div>
+                
+                <!-- Register Form -->
+                <form id="registerForm" action="/register" method="POST">
+                    {{ form.hidden_tag() }}
+                    <!-- Full Name -->
+                    <div class="form-group">
+                        <i class="fas fa-user"></i>
+                        <input type="text" class="form-control" id="fullName" name="name" placeholder="Full Name" required>
+                        <div class="invalid-feedback">Please enter your full name</div>
+                    </div>
+                    
+                    <!-- Email -->
+                    <div class="form-group">
+                        <i class="fas fa-envelope"></i>
+                        <input type="email" class="form-control" id="email" name="email" placeholder="Email Address" required>
+                        <div class="invalid-feedback">Please enter a valid email address</div>
+                    </div>
+                    
+                    <!-- Phone -->
+                    <div class="form-group">
+                        <i class="fas fa-phone"></i>
+                        <input type="tel" class="form-control" id="phone" name="phone" placeholder="Phone Number" required>
+                        <div class="invalid-feedback">Please enter a valid 10-digit phone number</div>
+                    </div>
+                    
+                    <!-- Password -->
+                    <div class="form-group">
+                        <i class="fas fa-lock"></i>
+                        <input type="password" class="form-control" id="password" name="password" placeholder="Password" required>
+                        <span class="password-toggle" onclick="togglePassword('password', 'toggleIcon1')">
+                            <i class="fas fa-eye" id="toggleIcon1"></i>
+                        </span>
+                        <div class="password-strength mt-2">
+                            <div class="password-strength-bar" id="passwordStrength"></div>
+                        </div>
+                        <small class="text-muted" id="passwordHelp">Password must be at least 6 characters</small>
+                        <div class="invalid-feedback">Password must be at least 6 characters</div>
+                    </div>
+                    
+                    <!-- Confirm Password -->
+                    <div class="form-group">
+                        <i class="fas fa-lock"></i>
+                        <input type="password" class="form-control" id="confirmPassword" name="confirm_password" placeholder="Confirm Password" required>
+                        <span class="password-toggle" onclick="togglePassword('confirmPassword', 'toggleIcon2')">
+                            <i class="fas fa-eye" id="toggleIcon2"></i>
+                        </span>
+                        <div class="invalid-feedback">Passwords do not match</div>
+                    </div>
+                    
+                    <!-- Address -->
+                    <div class="form-group">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <input type="text" class="form-control" id="location" name="location" placeholder="Room Number / Address" required>
+                        <div class="invalid-feedback">Please enter your room number</div>
+                    </div>
+                    
+                    <!-- Terms and Conditions -->
+                    <div class="terms-check">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="terms" name="terms" required>
+                            <label class="form-check-label" for="terms">
+                                I agree to the <a href="#" data-bs-toggle="modal" data-bs-target="#termsModal">Terms of Service</a> and <a href="#" data-bs-toggle="modal" data-bs-target="#privacyModal">Privacy Policy</a>
+                            </label>
+                            <div class="invalid-feedback">You must agree to the terms</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Register Button -->
+                    <button type="submit" class="btn-register" id="registerBtn">
+                        <span class="normal-state">Create Account</span>
+                        <span class="loading-state d-none">
+                            <i class="fas fa-spinner fa-spin me-2"></i>Creating Account...
+                        </span>
+                    </button>
+                </form>
+                
+                <!-- Login Link -->
+                <div class="login-link">
+                    Already have an account? <a href="/login">Sign in</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Terms Modal -->
+    <div class="modal fade" id="termsModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Terms of Service</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <h6>1. Terms</h6>
+                    <p>By accessing our website, you are agreeing to be bound by these terms of service and agree that you are responsible for compliance with any applicable local laws.</p>
+                    
+                    <h6>2. Use License</h6>
+                    <p>Permission is granted to temporarily use our services for personal, non-commercial transitory viewing only.</p>
+                    
+                    <h6>3. Disclaimer</h6>
+                    <p>The materials on our website are provided on an 'as is' basis. We make no warranties, expressed or implied, and hereby disclaim and negate all other warranties including, without limitation, implied warranties or conditions of merchantability, fitness for a particular purpose, or non-infringement of intellectual property or other violation of rights.</p>
+                    
+                    <h6>4. Limitations</h6>
+                    <p>In no event shall we be liable for any damages (including, without limitation, damages for loss of data or profit, or due to business interruption) arising out of the use or inability to use our services.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">I Understand</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Privacy Modal -->
+    <div class="modal fade" id="privacyModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Privacy Policy</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <h6>Information Collection</h6>
+                    <p>We collect information you provide directly to us, such as when you create an account, place an order, or contact customer support.</p>
+                    
+                    <h6>Use of Information</h6>
+                    <p>We use the information we collect to provide, maintain, and improve our services, process transactions, and communicate with you.</p>
+                    
+                    <h6>Information Sharing</h6>
+                    <p>We do not share your personal information with third parties except as described in this policy or with your consent.</p>
+                    
+                    <h6>Data Security</h6>
+                    <p>We take reasonable measures to help protect your personal information from loss, theft, misuse, and unauthorized access.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">I Understand</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    
+    <script>
+        // Toggle password visibility
+        function togglePassword(fieldId, iconId) {
+            const passwordField = document.getElementById(fieldId);
+            const toggleIcon = document.getElementById(iconId);
+            
+            if (passwordField.type === 'password') {
+                passwordField.type = 'text';
+                toggleIcon.classList.remove('fa-eye');
+                toggleIcon.classList.add('fa-eye-slash');
+            } else {
+                passwordField.type = 'password';
+                toggleIcon.classList.remove('fa-eye-slash');
+                toggleIcon.classList.add('fa-eye');
+            }
+        }
+        
+        // Password strength checker
+        $('#password').on('input', function() {
+            const password = $(this).val();
+            const strengthBar = $('#passwordStrength');
+            
+            strengthBar.removeClass('strength-weak strength-medium strength-strong');
+            
+            if (password.length === 0) {
+                strengthBar.css('width', '0');
+            } else if (password.length < 6) {
+                strengthBar.addClass('strength-weak');
+                $('#passwordHelp').text('Password is too short').css('color', '#dc3545');
+            } else if (password.length < 8) {
+                strengthBar.addClass('strength-medium');
+                $('#passwordHelp').text('Medium strength password').css('color', '#ffc107');
+            } else {
+                // Check for complexity
+                const hasUpperCase = /[A-Z]/.test(password);
+                const hasLowerCase = /[a-z]/.test(password);
+                const hasNumbers = /\d/.test(password);
+                const hasSpecial = /[!@#$%^&*(),.?":{}|<>]/.test(password);
+                
+                if (hasUpperCase && hasLowerCase && hasNumbers && hasSpecial) {
+                    strengthBar.addClass('strength-strong');
+                    $('#passwordHelp').text('Strong password').css('color', '#28a745');
+                } else {
+                    strengthBar.addClass('strength-medium');
+                    $('#passwordHelp').text('Medium strength - add mix of uppercase, numbers, and symbols').css('color', '#ffc107');
+                }
+            }
+        });
+        
+        // Form validation
+        $('#registerForm').submit(function(e) {
+            e.preventDefault();
+            
+            // Reset validation
+            $('.form-control, .form-check-input').removeClass('is-invalid');
+            $('#errorAlert, #successAlert').hide();
+            
+            // Get form data
+            const formData = {
+                name: $('#fullName').val(),
+                email: $('#email').val(),
+                phone: $('#phone').val(),
+                password: $('#password').val(),
+                confirm_password: $('#confirmPassword').val(),
+                location: $('#location').val(),
+                terms: $('#terms').is(':checked')
+            };
+            
+            let isValid = true;
+            
+            // Validate full name
+            if (!formData.name || formData.name.length < 2) {
+                $('#fullName').addClass('is-invalid');
+                isValid = false;
+            }
+            
+            // Validate email
+            if (!formData.email || !isValidEmail(formData.email)) {
+                $('#email').addClass('is-invalid');
+                isValid = false;
+            }
+            
+            // Validate phone
+            if (!formData.phone || !/^\d{10}$/.test(formData.phone)) {
+                $('#phone').addClass('is-invalid');
+                isValid = false;
+            }
+            
+            // Validate password
+            if (!formData.password || formData.password.length < 6) {
+                $('#password').addClass('is-invalid');
+                isValid = false;
+            }
+            
+            // Validate confirm password
+            if (formData.password !== formData.confirm_password) {
+                $('#confirmPassword').addClass('is-invalid');
+                isValid = false;
+            }
+            
+            // Validate address
+            if (!formData.location) {
+                $('#location').addClass('is-invalid');
+                isValid = false;
+            }
+            
+            // Validate terms
+            if (!formData.terms) {
+                showError('You must agree to the Terms of Service');
+                $('#terms').addClass('is-invalid');
+                isValid = false;
+            }
+            
+            if (!isValid) {
+                return;
+            }
+            
+            // Show loading state
+            $('#registerBtn .normal-state').addClass('d-none');
+            $('#registerBtn .loading-state').removeClass('d-none');
+            $('#registerBtn').prop('disabled', true);
+            
+            // AJAX registration
+            $.ajax({
+                url: '/register',
+                method: 'POST',
+                data: $('#registerForm').serialize(),
+                dataType: 'json',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                success: function(response) {
+                    if (response.success) {
+                        showSuccess('Registration successful! Redirecting to login...');
+                        setTimeout(() => {
+                            window.location.href = '/login';
+                        }, 2000);
+                    } else {
+                        showError((response && response.message) ? response.message : 'Registration failed');
+                        resetButton();
+                    }
+                },
+                error: function(xhr) {
+                    showError(xhr.responseJSON?.message || 'Registration failed. Please try again.');
+                    resetButton();
+                }
+            });
+        });
+        
+        // Email validation
+        function isValidEmail(email) {
+            return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+        }
+        
+        // Show error message
+        function showError(message) {
+            $('#errorMessage').text(message);
+            $('#errorAlert').show();
+            setTimeout(() => {
+                $('#errorAlert').fadeOut();
+            }, 5000);
+        }
+        
+        // Show success message
+        function showSuccess(message) {
+            $('#successMessage').text(message);
+            $('#successAlert').show();
+        }
+        
+        // Reset button state
+        function resetButton() {
+            $('#registerBtn .normal-state').removeClass('d-none');
+            $('#registerBtn .loading-state').addClass('d-none');
+            $('#registerBtn').prop('disabled', false);
+        }
+    </script>
+</body>
+</html>

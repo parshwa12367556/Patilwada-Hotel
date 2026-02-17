@@ -1,0 +1,254 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard - FoodieExpress{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <h2 class="mb-4">Admin Dashboard</h2>
+    
+    <div class="row g-4 mb-5">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title">Total Orders</h6>
+                            <h2 class="mb-0">{{ total_orders }}</h2>
+                        </div>
+                        <i class="fas fa-shopping-bag fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title">Total Foods</h6>
+                            <h2 class="mb-0">{{ total_foods }}</h2>
+                        </div>
+                        <i class="fas fa-utensils fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-dark h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title">Pending Orders</h6>
+                            <h2 class="mb-0">{{ pending_orders }}</h2>
+                        </div>
+                        <i class="fas fa-clock fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title">Total Users</h6>
+                            <h2 class="mb-0">{{ total_users }}</h2>
+                        </div>
+                        <i class="fas fa-users fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-4 mb-4">
+            <div class="list-group">
+                <a href="{{ url_for('admin_dashboard') }}" class="list-group-item list-group-item-action active">
+                    <i class="fas fa-tachometer-alt me-2"></i>Dashboard
+                </a>
+                <a href="{{ url_for('manage_foods') }}" class="list-group-item list-group-item-action">
+                    <i class="fas fa-hamburger me-2"></i>Manage Foods
+                </a>
+                <a href="{{ url_for('admin_orders') }}" class="list-group-item list-group-item-action">
+                    <i class="fas fa-list me-2"></i>View Orders
+                </a>
+                <a href="{{ url_for('kds') }}" class="list-group-item list-group-item-action">
+                    <i class="fas fa-tv me-2"></i>Kitchen Display
+                </a>
+                <a href="{{ url_for('admin_users') }}" class="list-group-item list-group-item-action">
+                    <i class="fas fa-users me-2"></i>Manage Users
+                </a>
+                <a href="{{ url_for('manage_coupons') }}" class="list-group-item list-group-item-action">
+                    <i class="fas fa-tags me-2"></i>Manage Coupons
+                </a>
+                <a href="{{ url_for('admin_newsletter') }}" class="list-group-item list-group-item-action">
+                    <i class="fas fa-envelope me-2"></i>Newsletter
+                </a>
+            </div>
+            
+            <!-- Order Status Chart -->
+            <div class="card shadow mt-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Order Status</h6>
+                </div>
+                <div class="card-body">
+                    <canvas id="statusChart" style="height: 250px; width: 100%;" data-labels='{{ status_labels|tojson }}' data-data='{{ status_data|tojson }}'></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-8">
+            <!-- Sales Chart -->
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="m-0 font-weight-bold text-primary">Sales Overview</h6>
+                    <form class="d-flex gap-2 align-items-center" method="GET">
+                        <input type="date" name="start_date" class="form-control form-control-sm" value="{{ start_date }}" style="width: auto;">
+                        <span class="small text-muted">to</span>
+                        <input type="date" name="end_date" class="form-control form-control-sm" value="{{ end_date }}" style="width: auto;">
+                        <button type="submit" class="btn btn-sm btn-primary">Filter</button>
+                        <a href="{{ url_for('export_sales', start_date=start_date, end_date=end_date) }}" class="btn btn-sm btn-success">
+                            <i class="fas fa-file-csv me-1"></i> Export
+                        </a>
+                    </form>
+                </div>
+                <div class="card-body">
+                    <canvas id="salesChart" style="height: 300px; width: 100%;" data-dates='{{ dates|tojson }}' data-sales='{{ sales|tojson }}'></canvas>
+                </div>
+            </div>
+
+            <!-- Recent Orders -->
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Recent Orders</h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Order ID</th>
+                                    <th>Customer</th>
+                                    <th>Amount</th>
+                                    <th>Status</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for order in recent_orders %}
+                                <tr>
+                                    <td>#{{ order.order_number }}</td>
+                                    <td>{{ order.customer.name }}</td>
+                                    <td>₹{{ order.total_amount }}</td>
+                                    <td>
+                                        <span class="badge bg-{% if order.status == 'pending' %}warning{% elif order.status == 'confirmed' %}primary{% elif order.status == 'delivered' %}success{% elif order.status == 'cancelled' %}danger{% else %}info{% endif %}">
+                                            {{ order.status|title }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <a href="{{ url_for('order_details', order_id=order.id) }}" class="btn btn-sm btn-outline-primary">View</a>
+                                        <a href="{{ url_for('print_receipt', order_id=order.id) }}" target="_blank" class="btn btn-sm btn-outline-secondary" title="Print Receipt">
+                                            <i class="fas fa-print"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const canvas = document.getElementById('salesChart');
+    const ctx = canvas.getContext('2d');
+    const dates = JSON.parse(canvas.dataset.dates);
+    const sales = JSON.parse(canvas.dataset.sales);
+
+    const salesChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: dates,
+            datasets: [{
+                label: 'Sales (₹)',
+                data: sales,
+                backgroundColor: 'rgba(13, 110, 253, 0.1)',
+                borderColor: 'rgba(13, 110, 253, 1)',
+                borderWidth: 2,
+                pointBackgroundColor: 'rgba(13, 110, 253, 1)',
+                tension: 0.4,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        borderDash: [2, 2]
+                    }
+                },
+                x: {
+                    grid: {
+                        display: false
+                    }
+                }
+            }
+        }
+    });
+
+    // Status Distribution Chart
+    const statusCanvas = document.getElementById('statusChart');
+    const statusCtx = statusCanvas.getContext('2d');
+    const statusLabels = JSON.parse(statusCanvas.dataset.labels);
+    const statusData = JSON.parse(statusCanvas.dataset.data);
+
+    // Map colors to statuses
+    const statusColors = {
+        'Pending': '#ffc107',
+        'Confirmed': '#0d6efd',
+        'Preparing': '#17a2b8',
+        'Delivered': '#198754',
+        'Cancelled': '#dc3545'
+    };
+    const bgColors = statusLabels.map(label => statusColors[label] || '#6c757d');
+
+    new Chart(statusCtx, {
+        type: 'doughnut',
+        data: {
+            labels: statusLabels,
+            datasets: [{
+                data: statusData,
+                backgroundColor: bgColors,
+                hoverOffset: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        boxWidth: 12
+                    }
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}

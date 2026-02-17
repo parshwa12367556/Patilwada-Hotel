@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+
+{% block title %}Guest Services - HotelServe{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <!-- Request Form -->
+        <div class="col-lg-5 mb-5">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white py-3">
+                    <h4 class="mb-0"><i class="fas fa-concierge-bell me-2"></i>Request Service</h4>
+                </div>
+                <div class="card-body p-4">
+                    <p class="text-muted mb-4">Need housekeeping, extra towels, or maintenance? Let us know and we'll be right there.</p>
+                    
+                    <form method="POST">
+                        {{ form.hidden_tag() }}
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Room Number</label>
+                            <input type="text" class="form-control" value="{{ current_user.location }}" readonly>
+                        </div>
+                        
+                        <div class="mb-3">
+                            {{ form.service_type.label(class="form-label") }}
+                            {{ form.service_type(class="form-select") }}
+                        </div>
+                        
+                        <div class="mb-4">
+                            {{ form.description.label(class="form-label") }}
+                            {{ form.description(class="form-control", rows="4", placeholder="E.g., Need 2 extra bath towels") }}
+                        </div>
+                        
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary btn-lg">Submit Request</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Request History -->
+        <div class="col-lg-7">
+            <h4 class="mb-4">Your Requests</h4>
+            
+            {% if requests %}
+                <div class="list-group shadow-sm">
+                    {% for req in requests %}
+                    <div class="list-group-item p-3">
+                        <div class="d-flex w-100 justify-content-between align-items-center mb-2">
+                            <h5 class="mb-1 text-primary">
+                                {% if req.service_type == 'housekeeping' %}
+                                    <i class="fas fa-broom me-2"></i>Housekeeping
+                                {% elif req.service_type == 'towels' %}
+                                    <i class="fas fa-bath me-2"></i>Extra Towels
+                                {% elif req.service_type == 'maintenance' %}
+                                    <i class="fas fa-tools me-2"></i>Maintenance
+                                {% else %}
+                                    <i class="fas fa-bell me-2"></i>{{ req.service_type|replace('_', ' ')|title }}
+                                {% endif %}
+                            </h5>
+                            <span class="badge rounded-pill 
+                                {% if req.status == 'pending' %}bg-warning text-dark
+                                {% elif req.status == 'in_progress' %}bg-info text-white
+                                {% elif req.status == 'completed' %}bg-success
+                                {% else %}bg-secondary{% endif %}">
+                                {{ req.status|replace('_', ' ')|title }}
+                            </span>
+                        </div>
+                        <p class="mb-1">{{ req.description or 'No additional details provided.' }}</p>
+                        <small class="text-muted">Requested on {{ req.created_at.strftime('%b %d, %I:%M %p') }}</small>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="text-center py-5 bg-light rounded">
+                    <i class="fas fa-check-circle fa-3x text-muted mb-3"></i>
+                    <h5>No active requests</h5>
+                    <p class="text-muted">You haven't made any service requests yet.</p>
+                </div>
+            {% endif %}
+            
+            <!-- Quick Info -->
+            <div class="row mt-4 g-3">
+                <div class="col-md-6">
+                    <div class="card bg-light border-0 h-100">
+                        <div class="card-body text-center">
+                            <i class="fas fa-phone fa-2x text-primary mb-2"></i>
+                            <h6>Front Desk</h6>
+                            <p class="mb-0">Dial <strong>9</strong> from room phone</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card bg-light border-0 h-100">
+                        <div class="card-body text-center">
+                            <i class="fas fa-wifi fa-2x text-primary mb-2"></i>
+                            <h6>Wi-Fi Support</h6>
+                            <p class="mb-0">Dial <strong>8</strong> for IT help</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

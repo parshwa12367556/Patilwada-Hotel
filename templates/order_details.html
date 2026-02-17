@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+
+{% block title %}Order #{{ order.order_number }}{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold mb-0">Order #{{ order.order_number }}</h2>
+            <p class="text-muted">Placed on {{ order.created_at.strftime('%B %d, %Y at %I:%M %p') }}</p>
+        </div>
+        <a href="{{ url_for('my_orders') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Back to My Orders
+        </a>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-header bg-light">
+            <div class="row">
+                <div class="col-md-4">
+                    <strong>Status:</strong> 
+                    <span class="badge bg-{% if order.status == 'pending' %}warning{% elif order.status == 'confirmed' %}primary{% elif order.status == 'delivered' %}success{% elif order.status == 'cancelled' %}danger{% else %}info{% endif %}">
+                        {{ order.status|title }}
+                    </span>
+                </div>
+                <div class="col-md-4">
+                    <strong>Location:</strong> {{ order.location }}
+                </div>
+                <div class="col-md-4">
+                    <strong>Payment:</strong> {{ order.payment_method|replace('_', ' ')|title }}
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            <h5 class="card-title mb-4">Order Summary</h5>
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th scope="col">Item</th>
+                            <th scope="col" class="text-center">Quantity</th>
+                            <th scope="col" class="text-end">Price</th>
+                            <th scope="col" class="text-end">Subtotal</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in order.items %}
+                        <tr>
+                            <td>
+                                <strong>{{ item.food_item.name }}</strong>
+                                {% if item.special_instructions %}
+                                <p class="small text-muted mb-0">Note: {{ item.special_instructions }}</p>
+                                {% endif %}
+                            </td>
+                            <td class="text-center">{{ item.quantity }}</td>
+                            <td class="text-end">₹{{ "%.2f"|format(item.price) }}</td>
+                            <td class="text-end">₹{{ "%.2f"|format(item.price * item.quantity) }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            {% if order.special_instructions %}
+            <div class="alert alert-info mt-3">
+                <strong>Overall Order Instructions:</strong> {{ order.special_instructions }}
+            </div>
+            {% endif %}
+
+            <div class="row justify-content-end mt-4">
+                <div class="col-md-5">
+                    <ul class="list-group">
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            Total Amount
+                            <span class="fw-bold fs-5">₹{{ "%.2f"|format(order.total_amount) }}</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="card-footer text-end">
+            {% if order.status in ['pending', 'confirmed'] %}
+            <form action="{{ url_for('cancel_order', order_id=order.id) }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to cancel this order?');">
+                <button type="submit" class="btn btn-danger">
+                    <i class="fas fa-times me-2"></i>Cancel Order
+                </button>
+            </form>
+            {% endif %}
+            <a href="{{ url_for('print_receipt', order_id=order.id) }}" target="_blank" class="btn btn-secondary">
+                <i class="fas fa-print me-2"></i>Print Receipt
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

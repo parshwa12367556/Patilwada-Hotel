@@ -1,0 +1,436 @@
+{% extends "base.html" %}
+
+{% block title %}Shopping Cart - FoodieExpress{% endblock %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="/static/css/cart.css">
+    <style>
+        .cart-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px 0;
+            margin-bottom: 30px;
+        }
+        
+        .cart-item {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            transition: all 0.3s;
+        }
+        
+        .cart-item:hover {
+            box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+        }
+        
+        .cart-item-image {
+            width: 100px;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 10px;
+        }
+        
+        .cart-item-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        
+        .cart-item-category {
+            color: #666;
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+        }
+        
+        .cart-item-price {
+            color: #0d6efd;
+            font-weight: 600;
+            font-size: 1.2rem;
+        }
+        
+        .cart-quantity {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .cart-quantity button {
+            width: 30px;
+            height: 30px;
+            border: 1px solid #dee2e6;
+            background: white;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .cart-quantity button:hover {
+            background: #0d6efd;
+            color: white;
+        }
+        
+        .cart-quantity input {
+            width: 50px;
+            text-align: center;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 5px;
+        }
+        
+        .remove-item {
+            color: #dc3545;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .remove-item:hover {
+            color: #bb2d3b;
+            transform: scale(1.1);
+        }
+        
+        .cart-summary {
+            background: white;
+            border-radius: 10px;
+            padding: 25px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 100px;
+        }
+        
+        .summary-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            color: #666;
+        }
+        
+        .summary-total {
+            display: flex;
+            justify-content: space-between;
+            margin: 20px 0;
+            padding-top: 20px;
+            border-top: 2px dashed #dee2e6;
+            font-size: 1.3rem;
+            font-weight: 600;
+        }
+        
+        .checkout-btn {
+            width: 100%;
+            padding: 15px;
+            background: #0d6efd;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .checkout-btn:hover {
+            background: #0b5ed7;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(13,110,253,0.3);
+        }
+        
+        .empty-cart {
+            text-align: center;
+            padding: 60px 20px;
+        }
+        
+        .empty-cart img {
+            width: 200px;
+            margin-bottom: 30px;
+            opacity: 0.5;
+        }
+        
+        .empty-cart h3 {
+            color: #666;
+            margin-bottom: 20px;
+        }
+        
+        .coupon-input {
+            margin: 20px 0;
+        }
+        
+        .coupon-input .input-group {
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        
+        .coupon-input input {
+            border: 1px solid #dee2e6;
+            padding: 12px;
+        }
+        
+        .coupon-input button {
+            padding: 12px 20px;
+            background: #28a745;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <!-- Cart Header -->
+    <div class="cart-header">
+        <div class="container">
+            <h1 class="display-5 fw-bold mb-0">
+                <i class="fas fa-shopping-cart me-3"></i>Your Shopping Cart
+            </h1>
+            <p class="lead mb-0 mt-2">Review and modify your items before checkout</p>
+        </div>
+    </div>
+    
+    <!-- Cart Content -->
+    <div class="container py-4">
+        <div class="row">
+            <!-- Cart Items -->
+            <div class="col-lg-8">
+                <!-- Cart Items List -->
+                <div class="cart-items" id="cart-items-container">
+                    {% if cart_items %}
+                        {% for item in cart_items %}
+                        <div class="cart-item" data-item-id="{{ item.id }}">
+                            <div class="row align-items-center">
+                                <div class="col-md-2 col-4">
+                                    <img src="{{ url_for('static', filename='uploads/' + item.food.image) }}" alt="{{ item.food.name }}" class="cart-item-image">
+                                </div>
+                                <div class="col-md-6 col-8">
+                                    <h5 class="cart-item-title">{{ item.food.name }}</h5>
+                                    <p class="cart-item-category">
+                                        <i class="fas fa-tag me-1"></i>{{ item.food.category|title }}
+                                    </p>
+                                    <div class="cart-item-price">₹{{ "%.2f"|format(item.food.price) }}</div>
+                                </div>
+                                <div class="col-md-3 col-8 mt-3 mt-md-0">
+                                    <div class="cart-quantity">
+                                        <button class="update-qty btn btn-sm btn-outline-secondary" data-action="decrease" data-id="{{ item.id }}">
+                                            <i class="fas fa-minus"></i>
+                                        </button>
+                                        <input type="number" class="qty-input form-control form-control-sm text-center" value="{{ item.quantity }}" min="1" max="10" readonly data-id="{{ item.id }}">
+                                        <button class="update-qty btn btn-sm btn-outline-secondary" data-action="increase" data-id="{{ item.id }}">
+                                            <i class="fas fa-plus"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="col-md-1 col-4 text-end">
+                                    <form action="{{ url_for('remove_from_cart', item_id=item.id) }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to remove this item?');">
+                                        <button type="submit" class="btn btn-link text-danger p-0 remove-item" title="Remove item">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                            {% if item.special_instructions %}
+                            <div class="mt-2 ps-2">
+                                <small class="text-muted"><i class="fas fa-info-circle me-1"></i> Special instructions: {{ item.special_instructions }}</small>
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                    <div class="empty-cart card">
+                        <div class="card-body text-center py-5">
+                            <img src="/static/images/empty-cart.svg" alt="Empty Cart" style="width: 150px; opacity: 0.7;">
+                            <h3 class="mt-4">Your cart is empty</h3>
+                            <p class="text-muted">Looks like you haven't added anything to your cart yet.</p>
+                            <a href="{{ url_for('menu') }}" class="btn btn-primary mt-2">Browse Menu</a>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <!-- Continue Shopping -->
+                <div class="mt-4">
+                    <a href="/menu" class="btn btn-outline-primary">
+                        <i class="fas fa-arrow-left me-2"></i>Continue Shopping
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Cart Summary -->
+            <div class="col-lg-4 mt-4 mt-lg-0">
+                <div class="cart-summary">
+                    <h5 class="mb-4">Order Summary</h5>
+                    
+                    <!-- Coupon Input -->
+                    <div class="coupon-input">
+                        <div class="input-group">
+                            <input type="text" class="form-control" placeholder="Enter coupon code">
+                            <button class="btn btn-success" type="button">Apply</button>
+                        </div>
+                    </div>
+                    
+                    <!-- Price Breakdown -->
+                    <div class="summary-item">
+                        <span>Subtotal (<span id="summary-item-count">{{ cart_count }}</span> items)</span>
+                        <span class="fw-bold" id="summary-subtotal">₹{{ "%.2f"|format(subtotal) }}</span>
+                    </div>
+                    
+                    <div class="summary-item">
+                        <span>Delivery Charge</span>
+                        <span class="fw-bold text-success" id="summary-delivery">
+                            {% if delivery_charge > 0 %}
+                                ₹{{ "%.2f"|format(delivery_charge) }}
+                            {% else %}
+                                FREE
+                            {% endif %}
+                        </span>
+                    </div>
+                    
+                    <!-- Total -->
+                    <div class="summary-total">
+                        <span>Total Amount</span>
+                        <span class="text-primary" id="summary-total">₹{{ "%.2f"|format(total) }}</span>
+                    </div>
+                    
+                    <!-- Delivery Time -->
+                    <div class="alert alert-info mb-3">
+                        <i class="fas fa-clock me-2"></i>
+                        Estimated delivery in 30-40 minutes
+                    </div>
+                    
+                    <!-- Checkout Button -->
+                    {% if cart_items %}
+                    <a href="/checkout" class="checkout-btn">
+                        <i class="fas fa-lock me-2"></i>Proceed to Checkout
+                    </a>
+                    {% endif %}
+                    
+                    <!-- Payment Methods -->
+                    <div class="text-center mt-4">
+                        <p class="small text-muted mb-2">We accept:</p>
+                        <div class="payment-icons">
+                            <i class="fab fa-cc-visa fa-2x me-2"></i>
+                            <i class="fab fa-cc-mastercard fa-2x me-2"></i>
+                            <i class="fab fa-cc-amex fa-2x me-2"></i>
+                            <i class="fab fa-cc-paypal fa-2x"></i>
+                        </div>
+                        <p class="small text-muted mt-2">
+                            <i class="fas fa-shield-alt me-1"></i>
+                            Secure checkout guaranteed
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Recommended Items -->
+    <section class="py-5 bg-light mt-5">
+        <div class="container">
+            <h4 class="mb-4">Recommended for You</h4>
+            <div class="row g-4">
+                {% for food in recommended_foods %}
+                <div class="col-md-3 col-6">
+                    <div class="card h-100">
+                        <img src="{{ url_for('static', filename='uploads/' + food.image) }}" class="card-img-top" alt="{{ food.name }}" style="height: 150px; object-fit: cover;">
+                        <div class="card-body">
+                            <h6 class="card-title">{{ food.name }}</h6>
+                            <p class="text-muted small mb-2">₹{{ "%.2f"|format(food.price) }}</p>
+                            <button class="btn btn-sm btn-outline-primary w-100 add-to-cart" data-food-id="{{ food.id }}">
+                                <i class="fas fa-cart-plus me-1"></i>Add
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+{% endblock %}
+    
+{% block extra_js %}
+    <script>
+    $(document).ready(function() {
+        // Update quantity
+        $('.update-qty').click(function() {
+            const button = $(this);
+            const action = button.data('action');
+            const itemId = button.data('id');
+            const input = $(`.qty-input[data-id="${itemId}"]`);
+            let currentQty = parseInt(input.val());
+            
+            let newQty = currentQty;
+            if (action === 'increase' && currentQty < 10) {
+                newQty = currentQty + 1;
+            } else if (action === 'decrease') {
+                newQty = currentQty - 1;
+            }
+
+            if (newQty !== currentQty) {
+                input.val(newQty);
+                updateCartItem(itemId, newQty, button);
+            }
+        });
+
+        function updateCartItem(itemId, quantity, button) {
+            button.prop('disabled', true); // Disable button during request
+            $.ajax({
+                url: '/update-cart/' + itemId,
+                method: 'POST',
+                data: JSON.stringify({ quantity: quantity }),
+                contentType: 'application/json',
+                success: function(response) {
+                    if (response.success) {
+                        updateSummaryUI(response);
+                        if (quantity < 1) {
+                            // Item removed, reload page to show empty cart message if needed
+                            window.location.reload();
+                        }
+                    }
+                },
+                error: function() {
+                    alert('Error updating cart. Please try again.');
+                },
+                complete: function() {
+                    button.prop('disabled', false); // Re-enable button
+                }
+            });
+        }
+
+        function updateSummaryUI(data) {
+            $('#summary-item-count').text(data.cart_count);
+            $('#cart-nav-count').text(data.cart_count);
+            $('#summary-subtotal').text('₹' + data.subtotal.toFixed(2));
+            $('#summary-delivery').text(data.delivery_charge > 0 ? '₹' + data.delivery_charge.toFixed(2) : 'FREE');
+            $('#summary-total').text('₹' + data.total.toFixed(2));
+        }
+
+            // Add to cart from recommendations
+            $('.add-to-cart').click(function() {
+                const foodId = $(this).data('food-id');
+                const button = $(this);
+                
+                $.ajax({
+                    url: '/add-to-cart/' + foodId,
+                    method: 'POST',
+                    data: JSON.stringify({ quantity: 1 }),
+                    contentType: 'application/json',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    success: function(response) {
+                        $('#cart-nav-count').text(response.cart_count);
+                        button.html('<i class="fas fa-check me-1"></i>Added');
+                        setTimeout(function() {
+                            button.html('<i class="fas fa-cart-plus me-1"></i>Add');
+                        }, 2000);
+                    },
+                    error: function(xhr) {
+                        if (xhr.status === 401) {
+                            window.location.href = '/login';
+                        } else {
+                            button.html('<i class="fas fa-cart-plus me-1"></i>Add');
+                        }
+                    }
+                });
+            });
+        });
+    </script>
+{% endblock %}

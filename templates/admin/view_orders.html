@@ -1,0 +1,157 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Orders - FoodieExpress{% endblock %}
+
+{% block extra_css %}
+<style>
+    .border-pending { border-color: #ffc107; }
+    .border-confirmed { border-color: #0d6efd; }
+    .border-preparing { border-color: #17a2b8; }
+    .border-delivered { border-color: #198754; }
+    .border-cancelled { border-color: #dc3545; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Manage Orders</h2>
+        <div class="d-flex gap-2">
+            <form class="d-flex" action="{{ url_for('admin_orders') }}" method="GET">
+                {% if current_status != 'all' %}
+                <input type="hidden" name="status" value="{{ current_status }}">
+                {% endif %}
+                <input class="form-control me-2" type="search" name="q" placeholder="Search Order ID" value="{{ request.args.get('q', '') }}">
+                <button class="btn btn-outline-primary" type="submit">Search</button>
+            </form>
+            <div class="btn-group">
+                <button type="button" class="btn btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown">
+                    Filter: {{ current_status|title }}
+                </button>
+                <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="{{ url_for('admin_orders', status='all') }}">All</a></li>
+                    <li><a class="dropdown-item" href="{{ url_for('admin_orders', status='pending') }}">Pending</a></li>
+                    <li><a class="dropdown-item" href="{{ url_for('admin_orders', status='confirmed') }}">Confirmed</a></li>
+                    <li><a class="dropdown-item" href="{{ url_for('admin_orders', status='preparing') }}">Preparing</a></li>
+                    <li><a class="dropdown-item" href="{{ url_for('admin_orders', status='delivered') }}">Delivered</a></li>
+                    <li><a class="dropdown-item" href="{{ url_for('admin_orders', status='cancelled') }}">Cancelled</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead>
+                        <tr>
+                            <th>Order ID</th>
+                            <th>Customer</th>
+                            <th>Date</th>
+                            <th>Total</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for order in orders.items %}
+                        <tr>
+                            <td>#{{ order.order_number }}</td>
+                            <td>
+                                <div>{{ order.customer.name }}</div>
+                                <small class="text-muted">{{ order.phone }}</small>
+                            </td>
+                            <td>{{ order.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                            <td>₹{{ order.total_amount }}</td>
+                            <td>
+                                <select class="form-select form-select-sm status-select border-{{ order.status }}" 
+                                        data-order-id="{{ order.id }}"
+                                        style="width: 130px;">
+                                    <option value="pending" {% if order.status == 'pending' %}selected{% endif %}>Pending</option>
+                                    <option value="confirmed" {% if order.status == 'confirmed' %}selected{% endif %}>Confirmed</option>
+                                    <option value="preparing" {% if order.status == 'preparing' %}selected{% endif %}>Preparing</option>
+                                    <option value="delivered" {% if order.status == 'delivered' %}selected{% endif %}>Delivered</option>
+                                    <option value="cancelled" {% if order.status == 'cancelled' %}selected{% endif %}>Cancelled</option>
+                                </select>
+                            </td>
+                            <td>
+                                <a href="{{ url_for('order_details', order_id=order.id) }}" class="btn btn-sm btn-info text-white">
+                                    <i class="fas fa-eye"></i> View
+                                </a>
+                                <a href="{{ url_for('print_receipt', order_id=order.id) }}" target="_blank" class="btn btn-sm btn-secondary" title="Print Receipt">
+                                    <i class="fas fa-print"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            <nav class="mt-4">
+                <ul class="pagination justify-content-center">
+                    {% if orders.has_prev %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('admin_orders', page=orders.prev_num, status=current_status, q=request.args.get('q', '')) }}">Previous</a>
+                    </li>
+                    {% else %}
+                    <li class="page-item disabled"><span class="page-link">Previous</span></li>
+                    {% endif %}
+                    
+                    {% if orders.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('admin_orders', page=orders.next_num, status=current_status, q=request.args.get('q', '')) }}">Next</a>
+                    </li>
+                    {% else %}
+                    <li class="page-item disabled"><span class="page-link">Next</span></li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+    document.querySelectorAll('.status-select').forEach(select => {
+        select.addEventListener('change', function() {
+            const orderId = this.dataset.orderId;
+            const newStatus = this.value;
+            
+            // Visual feedback
+            this.disabled = true;
+            
+            fetch(`/admin/orders/update/${orderId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({status: newStatus})
+            })
+            .then(response => response.json())
+            .then(data => {
+                this.disabled = false;
+                if (data.success) {
+                    // Update border color based on status
+                    let color = '#dc3545';
+                    if(newStatus === 'pending') color = '#ffc107';
+                    else if(newStatus === 'confirmed') color = '#0d6efd';
+                    else if(newStatus === 'preparing') color = '#17a2b8';
+                    else if(newStatus === 'delivered') color = '#198754';
+                    this.style.borderColor = color;
+                } else {
+                    alert('Failed to update status');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                this.disabled = false;
+                alert('An error occurred');
+            });
+        });
+    });
+</script>
+{% endblock %}
+{% endblock %}

@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Coupons - FoodieExpress{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Manage Coupons</h2>
+        <div>
+            <form action="{{ url_for('delete_expired_coupons') }}" method="POST" class="d-inline me-2" onsubmit="return confirm('Are you sure you want to delete all expired coupons? This action cannot be undone.');">
+                <button type="submit" class="btn btn-outline-danger">
+                    <i class="fas fa-trash me-2"></i>Delete Expired
+                </button>
+            </form>
+            <a href="{{ url_for('add_coupon') }}" class="btn btn-success">
+                <i class="fas fa-plus me-2"></i>Create Coupon
+            </a>
+        </div>
+    </div>
+
+    <div class="card shadow">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead>
+                        <tr>
+                            <th>Code</th>
+                            <th>Discount</th>
+                            <th>Valid Until</th>
+                            <th>Usage</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {% for coupon in coupons %}
+                        <tr>
+                            <!-- Coupon Code -->
+                            <td>
+                                <span class="fw-bold text-primary">{{ coupon.code }}</span>
+                            </td>
+
+                            <!-- Discount -->
+                            <td>
+                                {% if coupon.discount_type == 'percentage' %}
+                                    {{ coupon.value|int }}% Off
+                                {% else %}
+                                    ₹{{ coupon.value|int }} Off
+                                {% endif %}
+                            </td>
+
+                            <!-- Valid Date (SAFE) -->
+                            <td>
+                                {{ coupon.valid_to.strftime('%d %b %Y') if coupon.valid_to else 'No Expiry' }}
+                            </td>
+
+                            <!-- Usage -->
+                            <td>
+                                <div class="small">
+                                    {{ coupon.used_count or 0 }} / {{ coupon.usage_limit or '∞' }}
+
+                                    <div class="progress mt-1" style="height: 6px; width: 110px;">
+                                        {% set percent = ((coupon.used_count or 0) / (coupon.usage_limit or 1) * 100)|int %}
+                                        <!-- IMPORTANT: no Jinja inside CSS anymore -->
+                                        <div class="progress-bar coupon-progress"
+                                             role="progressbar"
+                                             data-percent="{{ percent }}">
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+
+                            <!-- Status -->
+                            <td>
+                                {% if coupon.active 
+                                      and coupon.valid_to 
+                                      and coupon.valid_to > now 
+                                      and (coupon.used_count or 0) < (coupon.usage_limit or 1) %}
+                                    <span class="badge bg-success">Active</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">Inactive</span>
+                                {% endif %}
+                            </td>
+
+                            <!-- Delete -->
+                            <td>
+                                <form action="{{ url_for('delete_coupon', coupon_id=coupon.id) }}"
+                                      method="POST"
+                                      class="d-inline"
+                                      onsubmit="return confirm('Are you sure you want to delete this coupon?');">
+                                    <button type="submit" class="btn btn-sm btn-danger">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+
+                        {% if not coupons %}
+                        <tr>
+                            <td colspan="6" class="text-center py-4 text-muted">
+                                No coupons found. Create one to get started!
+                            </td>
+                        </tr>
+                        {% endif %}
+                    </tbody>
+
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Progress Bar Script (Fixes CSS error + sets width dynamically) -->
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const bars = document.querySelectorAll(".coupon-progress");
+    bars.forEach(function(bar) {
+        let percent = bar.getAttribute("data-percent") || 0;
+        bar.style.width = percent + "%";
+    });
+});
+</script>
+
+{% endblock %}

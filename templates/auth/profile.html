@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+
+{% block title %}My Profile - HotelServe{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row g-4">
+        <!-- Profile Sidebar -->
+        <div class="col-lg-4">
+            <!-- User Info Card -->
+            <div class="card shadow-sm mb-4 border-0">
+                <div class="card-body text-center py-5">
+                    <div class="avatar bg-primary text-white rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3" style="width: 80px; height: 80px; font-size: 2rem;">
+                        {{ current_user.name[0] }}
+                    </div>
+                    <h4 class="mb-1">{{ current_user.name }}</h4>
+                    <p class="text-muted mb-3">{{ current_user.email }}</p>
+                    <div class="d-flex justify-content-center gap-2">
+                        <span class="badge bg-light text-dark border">
+                            <i class="fas fa-map-marker-alt me-1"></i> {{ current_user.location }}
+                        </span>
+                        {% if current_user.is_admin %}
+                        <span class="badge bg-danger">Admin</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stats -->
+            <div class="row g-3 mb-4">
+                <div class="col-6">
+                    <div class="card border-0 shadow-sm h-100 bg-primary text-white">
+                        <div class="card-body text-center p-3">
+                            <h3 class="fw-bold mb-0">{{ total_orders_count }}</h3>
+                            <small class="opacity-75">Total Orders</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="card border-0 shadow-sm h-100 bg-success text-white">
+                        <div class="card-body text-center p-3">
+                            <h3 class="fw-bold mb-0">₹{{ "%.0f"|format(total_spent) }}</h3>
+                            <small class="opacity-75">Total Spent</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Edit Profile Form -->
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0 fw-bold">Edit Profile</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        {{ form.hidden_tag() }}
+                        <div class="mb-3">
+                            {{ form.name.label(class="form-label small text-muted") }}
+                            {{ form.name(class="form-control") }}
+                        </div>
+                        <div class="mb-3">
+                            {{ form.phone.label(class="form-label small text-muted") }}
+                            {{ form.phone(class="form-control") }}
+                        </div>
+                        <div class="mb-3">
+                            {{ form.location.label(class="form-label small text-muted") }}
+                            {{ form.location(class="form-control") }}
+                        </div>
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary">Update Profile</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Order History -->
+        <div class="col-lg-8">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0 fw-bold">Order History</h5>
+                    <a href="{{ url_for('my_orders') }}" class="btn btn-sm btn-outline-primary">View All</a>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="bg-light">
+                                <tr>
+                                    <th class="ps-4">Order ID</th>
+                                    <th>Date</th>
+                                    <th>Amount</th>
+                                    <th>Status</th>
+                                    <th class="text-end pe-4">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for order in orders.items %}
+                                <tr>
+                                    <td class="ps-4 fw-bold">#{{ order.order_number }}</td>
+                                    <td class="text-muted small">{{ order.created_at.strftime('%d %b, %Y') }}</td>
+                                    <td class="fw-bold">₹{{ "%.2f"|format(order.total_amount) }}</td>
+                                    <td>
+                                        <span class="badge rounded-pill bg-{% if order.status == 'pending' %}warning text-dark{% elif order.status == 'confirmed' %}primary{% elif order.status == 'delivered' %}success{% elif order.status == 'cancelled' %}danger{% else %}info{% endif %}">
+                                            {{ order.status|title }}
+                                        </span>
+                                    </td>
+                                    <td class="text-end pe-4">
+                                        <a href="{{ url_for('order_details', order_id=order.id) }}" class="btn btn-sm btn-light text-primary">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                                {% if not orders.items %}
+                                <tr>
+                                    <td colspan="5" class="text-center py-5 text-muted">
+                                        <i class="fas fa-shopping-basket fa-2x mb-3 opacity-50"></i>
+                                        <p class="mb-0">No orders found</p>
+                                    </td>
+                                </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="card-footer bg-white py-3">
+                    <nav aria-label="Order pagination">
+                        <ul class="pagination justify-content-center mb-0">
+                            <li class="page-item {% if not orders.has_prev %}disabled{% endif %}">
+                                <a class="page-link border-0" href="{{ url_for('profile', page=orders.prev_num) if orders.has_prev else '#' }}"><i class="fas fa-chevron-left"></i></a>
+                            </li>
+                            {% for page_num in orders.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=1) %}
+                                {% if page_num %}
+                                    <li class="page-item {% if page_num == orders.page %}active{% endif %}">
+                                        <a class="page-link border-0 rounded-circle mx-1" href="{{ url_for('profile', page=page_num) }}">{{ page_num }}</a>
+                                    </li>
+                                {% else %}
+                                    <li class="page-item disabled"><span class="page-link border-0">...</span></li>
+                                {% endif %}
+                            {% endfor %}
+                            <li class="page-item {% if not orders.has_next %}disabled{% endif %}">
+                                <a class="page-link border-0" href="{{ url_for('profile', page=orders.next_num) if orders.has_next else '#' }}"><i class="fas fa-chevron-right"></i></a>
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

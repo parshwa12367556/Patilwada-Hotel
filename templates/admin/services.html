@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Services - HotelServe{% endblock %}
+
+{% block extra_css %}
+<style>
+    .border-pending { border-color: #ffc107; }
+    .border-in_progress { border-color: #17a2b8; }
+    .border-completed { border-color: #198754; }
+    .border-cancelled { border-color: #dc3545; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Guest Service Requests</h2>
+        <div class="btn-group">
+            <button type="button" class="btn btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown">
+                Filter: {{ current_status|replace('_', ' ')|title }}
+            </button>
+            <ul class="dropdown-menu">
+                <li><a class="dropdown-item" href="{{ url_for('admin_services', status='all') }}">All</a></li>
+                <li><a class="dropdown-item" href="{{ url_for('admin_services', status='pending') }}">Pending</a></li>
+                <li><a class="dropdown-item" href="{{ url_for('admin_services', status='in_progress') }}">In Progress</a></li>
+                <li><a class="dropdown-item" href="{{ url_for('admin_services', status='completed') }}">Completed</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="card shadow">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead>
+                        <tr>
+                            <th>Time</th>
+                            <th>Room / Guest</th>
+                            <th>Service Type</th>
+                            <th>Details</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for req in requests.items %}
+                        <tr>
+                            <td>{{ req.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                            <td>
+                                <div class="fw-bold">{{ req.user.location }}</div>
+                                <small class="text-muted">{{ req.user.name }}</small>
+                            </td>
+                            <td>
+                                <span class="badge bg-light text-dark border">
+                                    {{ req.service_type|replace('_', ' ')|title }}
+                                </span>
+                            </td>
+                            <td>{{ req.description }}</td>
+                            <td>
+                                <select class="form-select form-select-sm status-select border-{{ req.status }}" 
+                                        data-request-id="{{ req.id }}"
+                                        style="width: 140px;">
+                                    <option value="pending" {% if req.status == 'pending' %}selected{% endif %}>Pending</option>
+                                    <option value="in_progress" {% if req.status == 'in_progress' %}selected{% endif %}>In Progress</option>
+                                    <option value="completed" {% if req.status == 'completed' %}selected{% endif %}>Completed</option>
+                                    <option value="cancelled" {% if req.status == 'cancelled' %}selected{% endif %}>Cancelled</option>
+                                </select>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            <nav class="mt-4">
+                <ul class="pagination justify-content-center">
+                    {% if requests.has_prev %}
+                    <li class="page-item"><a class="page-link" href="{{ url_for('admin_services', page=requests.prev_num, status=current_status) }}">Previous</a></li>
+                    {% else %}
+                    <li class="page-item disabled"><span class="page-link">Previous</span></li>
+                    {% endif %}
+                    
+                    {% if requests.has_next %}
+                    <li class="page-item"><a class="page-link" href="{{ url_for('admin_services', page=requests.next_num, status=current_status) }}">Next</a></li>
+                    {% else %}
+                    <li class="page-item disabled"><span class="page-link">Next</span></li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+    document.querySelectorAll('.status-select').forEach(select => {
+        select.addEventListener('change', function() {
+            const reqId = this.dataset.requestId;
+            fetch(`/admin/services/update/${reqId}`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({status: this.value})
+            }).then(res => res.json()).then(data => {
+                if(!data.success) alert('Update failed');
+            });
+        });
+    });
+</script>
+{% endblock %}
+{% endblock %}
