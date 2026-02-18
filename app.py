@@ -89,6 +89,19 @@ def utility_processor():
         data['pending_services_count'] = ServiceRequest.query.filter_by(status='pending').count()
     return data
 
+@app.template_filter('status_badge')
+def status_badge_filter(status):
+    """Jinja filter to get a Bootstrap badge class for an order status."""
+    if status == 'pending':
+        return 'primary'
+    elif status == 'confirmed':
+        return 'info'
+    elif status == 'preparing':
+        return 'warning'
+    elif status == 'delivered':
+        return 'success'
+    return 'danger' # for 'cancelled'
+
 # Routes - Main Pages
 @app.route('/')
 def index():
@@ -166,7 +179,6 @@ def register():
             name=form.name.data,
             email=form.email.data,
             phone=form.phone.data,
-            location=form.location.data,
             password=generate_password_hash(form.password.data)
         )
         
@@ -380,6 +392,9 @@ def checkout():
         )
         
         db.session.add(order)
+        
+        # Also update the user's default location for future orders
+        current_user.location = form.location.data
         db.session.flush()  # Get order.id
         
         # Add order items
@@ -579,9 +594,20 @@ def admin_dashboard():
         sales.append(float(daily_total))
     
     # Order Status Distribution
-    status_counts = db.session.query(Order.status, db.func.count(Order.id)).group_by(Order.status).all()
-    status_labels = [s[0].title() for s in status_counts]
-    status_data = [s[1] for s in status_counts]
+    status_counts = dict(db.session.query(Order.status, db.func.count(Order.id)).group_by(Order.status).all())
+    
+    # Define a consistent order and color for statuses
+    status_config = {
+        'pending': {'label': 'Pending', 'color': '#0d6efd'},
+        'confirmed': {'label': 'Confirmed', 'color': '#0dcaf0'},
+        'preparing': {'label': 'Preparing', 'color': '#ffc107'},
+        'delivered': {'label': 'Delivered', 'color': '#198754'},
+        'cancelled': {'label': 'Cancelled', 'color': '#dc3545'}
+    }
+
+    status_labels = [v['label'] for k, v in status_config.items()]
+    status_data = [status_counts.get(k, 0) for k in status_config.keys()]
+    status_colors = [v['color'] for k, v in status_config.items()]
     
     recent_orders = Order.query.order_by(Order.created_at.desc()).limit(10).all()
     
@@ -595,6 +621,7 @@ def admin_dashboard():
                          sales=sales,
                          status_labels=status_labels,
                          status_data=status_data,
+                         status_colors=status_colors,
                          start_date=start_date.strftime('%Y-%m-%d'),
                          end_date=end_date.strftime('%Y-%m-%d'))
 

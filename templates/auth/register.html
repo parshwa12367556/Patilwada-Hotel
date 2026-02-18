@@ -268,13 +268,6 @@
                         <div class="invalid-feedback">Passwords do not match</div>
                     </div>
                     
-                    <!-- Address -->
-                    <div class="form-group">
-                        <i class="fas fa-map-marker-alt"></i>
-                        <input type="text" class="form-control" id="location" name="location" placeholder="Room Number / Address" required>
-                        <div class="invalid-feedback">Please enter your room number</div>
-                    </div>
-                    
                     <!-- Terms and Conditions -->
                     <div class="terms-check">
                         <div class="form-check">
@@ -427,7 +420,6 @@
                 phone: $('#phone').val(),
                 password: $('#password').val(),
                 confirm_password: $('#confirmPassword').val(),
-                location: $('#location').val(),
                 terms: $('#terms').is(':checked')
             };
             
@@ -460,12 +452,6 @@
             // Validate confirm password
             if (formData.password !== formData.confirm_password) {
                 $('#confirmPassword').addClass('is-invalid');
-                isValid = false;
-            }
-            
-            // Validate address
-            if (!formData.location) {
-                $('#location').addClass('is-invalid');
                 isValid = false;
             }
             

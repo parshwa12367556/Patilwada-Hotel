@@ -1,83 +1,166 @@
 {% extends "base.html" %}
 
-{% block title %}Kitchen Display System - FoodieExpress{% endblock %}
+{% block title %}Kitchen Display System - HotelServe{% endblock %}
 
 {% block extra_css %}
 <style>
     .kds-container {
-        background-color: #f8f9fa;
+        padding: 20px;
+        background-color: #f4f6f9;
         min-height: calc(100vh - 70px);
     }
     
-    .order-card {
-        transition: all 0.3s ease;
-        border: none;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    .kds-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
     }
     
-    .order-card.status-confirmed {
-        border-top: 5px solid #0d6efd;
+    .order-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 20px;
     }
     
-    .order-card.status-preparing {
-        border-top: 5px solid #ffc107;
-        background-color: #fffbf0;
+    .kds-card {
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        border-top: 6px solid #ccc;
+        transition: transform 0.2s;
+        height: 100%;
     }
     
-    .timer-badge {
-        font-family: monospace;
-        font-size: 1.1em;
+    .kds-card.status-confirmed {
+        border-top-color: #ffc107; /* Yellow for new orders */
     }
     
-    .item-row {
-        border-bottom: 1px dashed #dee2e6;
-        padding: 8px 0;
+    .kds-card.status-preparing {
+        border-top-color: #28a745; /* Green for preparing */
     }
     
-    .item-row:last-child {
+    .kds-card.is-delayed {
+        border-top-color: #dc3545; /* Red if taking too long */
+        animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+        0% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.4); }
+        70% { box-shadow: 0 0 0 10px rgba(220, 53, 69, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0); }
+    }
+    
+    .card-header {
+        padding: 15px;
+        border-bottom: 1px solid #eee;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: #fff;
+    }
+    
+    .card-body {
+        padding: 15px;
+        flex-grow: 1;
+        overflow-y: auto;
+        max-height: 400px;
+    }
+    
+    .order-items-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+    
+    .order-item {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 10px;
+        padding-bottom: 10px;
+        border-bottom: 1px dashed #eee;
+    }
+    
+    .order-item:last-child {
         border-bottom: none;
     }
     
-    .qty-badge {
-        font-size: 1.1em;
-        width: 30px;
-        display: inline-block;
-        text-align: center;
+    .item-qty {
+        font-weight: bold;
+        margin-right: 10px;
+        color: #333;
+        background: #eee;
+        padding: 2px 8px;
+        border-radius: 4px;
+        height: fit-content;
     }
     
-    .animate-in {
-        animation: fadeIn 0.5s ease-in;
+    .item-details {
+        flex-grow: 1;
     }
     
-    @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(20px); }
-        to { opacity: 1; transform: translateY(0); }
+    .item-name {
+        font-weight: 600;
+        font-size: 1.05rem;
+    }
+    
+    .item-notes {
+        font-size: 0.9rem;
+        color: #dc3545;
+        font-style: italic;
+        display: block;
+        margin-top: 2px;
+    }
+    
+    .card-footer {
+        padding: 15px;
+        background: #f8f9fa;
+        border-top: 1px solid #eee;
+    }
+    
+    .order-info {
+        font-size: 0.95rem;
+        margin-bottom: 15px;
+        color: #555;
+        background: #f8f9fa;
+        padding: 10px;
+        border-radius: 5px;
+    }
+    
+    .timer-badge {
+        background: #333;
+        color: white;
+        padding: 4px 10px;
+        border-radius: 4px;
+        font-size: 0.9rem;
+        font-weight: bold;
     }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="container-fluid py-4 kds-container">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h2 class="mb-0"><i class="fas fa-tv me-2"></i>Kitchen Display System</h2>
-            <p class="text-muted mb-0">Live orders auto-refresh every 10 seconds</p>
-        </div>
-        <div class="d-flex gap-3 align-items-center">
-            <div class="d-flex align-items-center gap-2">
-                <span class="badge bg-primary p-2">Confirmed</span>
-                <span class="badge bg-warning text-dark p-2">Preparing</span>
+<div class="kds-container">
+    <div class="kds-header">
+        <h2><i class="fas fa-utensils me-2"></i>Kitchen Display System</h2>
+        <div class="d-flex align-items-center">
+            <span class="me-3 text-muted" id="lastUpdated">Connecting...</span>
+            <div class="form-check form-switch me-3">
+                <input class="form-check-input" type="checkbox" id="autoRefresh" checked>
+                <label class="form-check-label" for="autoRefresh">Auto-Refresh</label>
             </div>
-            <div id="last-updated" class="text-muted small"></div>
+            <button class="btn btn-primary btn-sm" onclick="fetchOrders()">
+                <i class="fas fa-sync-alt me-1"></i> Refresh Now
+            </button>
         </div>
     </div>
-
-    <div id="orders-grid" class="row g-4">
-        <!-- Orders will be populated here via JS -->
-        <div class="col-12 text-center py-5 loading-spinner">
-            <div class="spinner-border text-primary" role="status">
-                <span class="visually-hidden">Loading...</span>
-            </div>
+    
+    <div id="ordersGrid" class="order-grid">
+        <div class="text-center w-100 py-5 text-muted">
+            <i class="fas fa-spinner fa-spin fa-2x"></i>
+            <p class="mt-2">Loading active orders...</p>
         </div>
     </div>
 </div>
@@ -85,111 +168,128 @@
 
 {% block extra_js %}
 <script>
-    function formatTimeAgo(dateString) {
-        const date = new Date(dateString);
-        const now = new Date();
-        const diffInSeconds = Math.floor((now - date) / 1000);
-        
-        if (diffInSeconds < 60) return 'Just now';
-        const minutes = Math.floor(diffInSeconds / 60);
-        return `${minutes} min ago`;
-    }
+    let refreshInterval;
 
-    function createOrderCard(order) {
-        const itemsHtml = order.items.map(item => `
-            <div class="item-row">
-                <div class="d-flex justify-content-between align-items-start">
-                    <div>
-                        <span class="badge bg-secondary qty-badge me-2">${item.quantity}</span>
-                        <span class="fw-bold">${item.name}</span>
-                    </div>
-                </div>
-                ${item.special_instructions ? `<div class="text-danger small ms-5 mt-1"><i class="fas fa-exclamation-circle me-1"></i>${item.special_instructions}</div>` : ''}
-            </div>
-        `).join('');
+    $(document).ready(function() {
+        fetchOrders();
+        startAutoRefresh();
 
-        const actionBtn = order.status === 'confirmed' 
-            ? `<button onclick="updateStatus(${order.id}, 'preparing')" class="btn btn-primary w-100"><i class="fas fa-fire me-2"></i>Start Preparing</button>`
-            : `<button onclick="updateStatus(${order.id}, 'delivered')" class="btn btn-success w-100"><i class="fas fa-check me-2"></i>Mark Ready</button>`;
+        $('#autoRefresh').change(function() {
+            if(this.checked) {
+                startAutoRefresh();
+            } else {
+                clearInterval(refreshInterval);
+            }
+        });
+    });
 
-        const statusBadge = order.status === 'confirmed'
-            ? '<span class="badge bg-primary">Confirmed</span>'
-            : '<span class="badge bg-warning text-dark">Preparing</span>';
-
-        return `
-            <div class="col-md-6 col-lg-4 col-xl-3 animate-in" id="order-${order.id}">
-                <div class="card h-100 order-card status-${order.status}">
-                    <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
-                        <h5 class="mb-0">#${order.order_number}</h5>
-                        <span class="badge bg-dark timer-badge"><i class="far fa-clock me-1"></i>${formatTimeAgo(order.created_at)}</span>
-                    </div>
-                    <div class="card-body">
-                        <div class="mb-3 pb-2 border-bottom">
-                            <div class="d-flex justify-content-between mb-1">
-                                <small class="text-muted">Location:</small>
-                                <span class="fw-bold">${order.location}</span>
-                            </div>
-                            <div class="d-flex justify-content-between">
-                                <small class="text-muted">Customer:</small>
-                                <span>${order.customer}</span>
-                            </div>
-                        </div>
-                        
-                        <div class="items-list mb-3">
-                            ${itemsHtml}
-                        </div>
-
-                        ${order.special_instructions ? `
-                            <div class="alert alert-warning py-2 px-3 mb-3 small">
-                                <strong>Note:</strong> ${order.special_instructions}
-                            </div>
-                        ` : ''}
-                    </div>
-                    <div class="card-footer bg-white border-top-0 pb-3">
-                        ${actionBtn}
-                    </div>
-                </div>
-            </div>
-        `;
+    function startAutoRefresh() {
+        // Refresh every 10 seconds
+        refreshInterval = setInterval(fetchOrders, 10000);
     }
 
     function fetchOrders() {
-        fetch('/api/kds/orders')
-            .then(response => response.json())
-            .then(data => {
-                const grid = document.getElementById('orders-grid');
-                
-                if (data.length === 0) {
-                    grid.innerHTML = `
-                        <div class="col-12 text-center py-5">
-                            <i class="fas fa-check-circle fa-4x text-success mb-3 opacity-50"></i>
-                            <h3>All Caught Up!</h3>
-                            <p class="text-muted">No active orders at the moment.</p>
-                        </div>`;
-                } else {
-                    // Simple re-render strategy (can be optimized to diff DOM if needed)
-                    grid.innerHTML = data.map(order => createOrderCard(order)).join('');
-                }
-                
-                document.getElementById('last-updated').textContent = 'Updated: ' + new Date().toLocaleTimeString();
-            })
-            .catch(error => console.error('Error fetching orders:', error));
-    }
-
-    function updateStatus(orderId, newStatus) {
-        fetch(`/admin/orders/update/${orderId}`, {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({status: newStatus})
-        }).then(res => res.json()).then(data => {
-            if(data.success) fetchOrders(); // Refresh immediately
+        $.get('/api/kds/orders', function(orders) {
+            renderOrders(orders);
+            const now = new Date();
+            $('#lastUpdated').text('Last updated: ' + now.toLocaleTimeString());
+        }).fail(function() {
+            $('#lastUpdated').text('Connection Error').addClass('text-danger');
         });
     }
 
-    // Initial load
-    fetchOrders();
-    
-    // Auto-refresh every 10 seconds
-    setInterval(fetchOrders, 10000);
+    function renderOrders(orders) {
+        const grid = $('#ordersGrid');
+        grid.empty();
+        
+        if (orders.length === 0) {
+            grid.html(`
+                <div class="col-12 text-center py-5 text-muted" style="grid-column: 1/-1;">
+                    <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
+                    <h4>All Caught Up!</h4>
+                    <p>No active orders in the kitchen.</p>
+                </div>
+            `);
+            return;
+        }
+        
+        orders.forEach(order => {
+            // Calculate time elapsed
+            const created = new Date(order.created_at);
+            const now = new Date();
+            const diffMs = now - created;
+            const diffMins = Math.floor(diffMs / 60000);
+            
+            let statusClass = 'status-' + order.status;
+            // If order is older than 20 mins, mark as delayed
+            if (diffMins > 20) statusClass += ' is-delayed';
+            
+            let actionBtn = '';
+            if (order.status === 'confirmed') {
+                actionBtn = `<button class="btn btn-success w-100 fw-bold" onclick="updateStatus(${order.id}, 'preparing')">
+                                <i class="fas fa-fire me-2"></i>Start Preparing
+                             </button>`;
+            } else if (order.status === 'preparing') {
+                actionBtn = `<button class="btn btn-primary w-100 fw-bold" onclick="updateStatus(${order.id}, 'delivered')">
+                                <i class="fas fa-check me-2"></i>Mark Ready / Delivered
+                             </button>`;
+            }
+            
+            let itemsHtml = '';
+            order.items.forEach(item => {
+                itemsHtml += `
+                    <li class="order-item">
+                        <span class="item-qty">${item.quantity}x</span>
+                        <div class="item-details">
+                            <div class="item-name">${item.name}</div>
+                            ${item.special_instructions ? `<span class="item-notes"><i class="fas fa-comment-alt me-1"></i>${item.special_instructions}</span>` : ''}
+                        </div>
+                    </li>
+                `;
+            });
+            
+            const card = `
+                <div class="kds-card ${statusClass}">
+                    <div class="card-header">
+                        <h5 class="mb-0 fw-bold">#${order.order_number}</h5>
+                        <span class="timer-badge ${diffMins > 20 ? 'bg-danger' : 'bg-dark'}">
+                            <i class="far fa-clock me-1"></i>${diffMins}m
+                        </span>
+                    </div>
+                    <div class="card-body">
+                        <div class="order-info">
+                            <div class="fw-bold"><i class="fas fa-map-marker-alt me-2"></i>${order.location}</div>
+                            <div class="small text-muted mt-1"><i class="fas fa-user me-2"></i>${order.customer}</div>
+                            ${order.special_instructions ? `<div class="text-danger mt-2 border-top pt-2"><i class="fas fa-exclamation-circle me-1"></i><strong>Note:</strong> ${order.special_instructions}</div>` : ''}
+                        </div>
+                        <ul class="order-items-list">
+                            ${itemsHtml}
+                        </ul>
+                    </div>
+                    <div class="card-footer">
+                        ${actionBtn}
+                    </div>
+                </div>
+            `;
+            grid.append(card);
+        });
+    }
+
+    function updateStatus(orderId, newStatus) {
+        $.ajax({
+            url: `/admin/orders/update/${orderId}`,
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({ status: newStatus }),
+            success: function(response) {
+                if (response.success) {
+                    fetchOrders(); // Refresh immediately
+                }
+            },
+            error: function() {
+                alert('Failed to update order status');
+            }
+        });
+    }
 </script>
 {% endblock %}

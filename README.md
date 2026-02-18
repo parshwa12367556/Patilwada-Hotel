@@ -1,4 +1,4 @@
-# HotelServe - Online Food Ordering System
+# PatilWada-hotel - Online Food Ordering System
 
 A complete Flask-based web application for hotel in-room dining and food ordering. This system allows guests to browse menus, place orders, and request hotel services, while providing administrators with tools to manage the entire workflow, including a Kitchen Display System (KDS).
 
@@ -76,3 +76,4 @@ When you run the app for the first time, a default admin account is created auto
 *   `templates/`: HTML files (Jinja2).
 *   `static/`: CSS, JS, and uploaded images.
 *   `instance/`: Contains the `food_system.db` database file.
+*   
