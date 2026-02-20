@@ -4,6 +4,7 @@
 
 {% block head %}
 {{ super() }}
+<link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" />
 <style>
     .stat-card {
         transition: transform 0.2s, box-shadow 0.2s;
@@ -38,9 +39,13 @@
     <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
         <h1 class="h2">Dashboard</h1>
         <div class="btn-toolbar mb-2 mb-md-0">
-            <form method="GET" action="{{ url_for('admin_dashboard') }}" class="d-flex align-items-center">
-                <input type="date" name="start_date" class="form-control form-control-sm me-2" value="{{ start_date }}">
-                <input type="date" name="end_date" class="form-control form-control-sm me-2" value="{{ end_date }}">
+            <form id="dateRangeForm" method="GET" action="{{ url_for('admin_dashboard') }}" class="d-flex align-items-center">
+                <div id="reportrange" class="form-control form-control-sm me-2" style="cursor: pointer; min-width: 240px;">
+                    <i class="fa fa-calendar"></i>&nbsp;
+                    <span></span> <i class="fa fa-caret-down float-end mt-1"></i>
+                </div>
+                <input type="hidden" name="start_date" id="startDate" value="{{ start_date }}">
+                <input type="hidden" name="end_date" id="endDate" value="{{ end_date }}">
                 <button type="submit" class="btn btn-sm btn-outline-secondary">Filter</button>
             </form>
         </div>
@@ -52,8 +57,19 @@
             <div class="card stat-card shadow-sm h-100">
                 <div class="card-body">
                     <div>
+                        <div class="text-muted text-uppercase small">Today's Sales</div>
+                        <div id="todays-sales-amount" class="h3 fw-bold mb-0">₹{{ "%.2f"|format(todays_sales) }}</div>
+                    </div>
+                    <i class="fas fa-money-bill-wave"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="card stat-card shadow-sm h-100">
+                <div class="card-body">
+                    <div>
                         <div class="text-muted text-uppercase small">Total Orders</div>
-                        <div class="h3 fw-bold mb-0">{{ total_orders }}</div>
+                        <div id="total-orders-count" class="h3 fw-bold mb-0">{{ total_orders }}</div>
                     </div>
                     <i class="fas fa-shopping-bag"></i>
                 </div>
@@ -64,7 +80,7 @@
                 <div class="card-body">
                     <div>
                         <div class="text-muted text-uppercase small">Pending Orders</div>
-                        <div class="h3 fw-bold mb-0">{{ pending_orders }}</div>
+                        <div id="pending-orders-count" class="h3 fw-bold mb-0">{{ pending_orders }}</div>
                     </div>
                     <i class="fas fa-hourglass-half"></i>
                 </div>
@@ -78,17 +94,6 @@
                         <div class="h3 fw-bold mb-0">{{ total_users }}</div>
                     </div>
                     <i class="fas fa-users"></i>
-                </div>
-            </div>
-        </div>
-        <div class="col-xl-3 col-md-6">
-            <div class="card stat-card shadow-sm h-100">
-                <div class="card-body">
-                    <div>
-                        <div class="text-muted text-uppercase small">Food Items</div>
-                        <div class="h3 fw-bold mb-0">{{ total_foods }}</div>
-                    </div>
-                    <i class="fas fa-utensils"></i>
                 </div>
             </div>
         </div>
@@ -119,6 +124,48 @@
                 <div class="card-body d-flex align-items-center justify-content-center">
                     <div class="chart-container">
                         <canvas id="orderStatusChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <div class="col-lg-12">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-white">
+                    <h5 class="card-title mb-0">Today's Sales by Hour</h5>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="hourlySalesChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <div class="col-lg-7">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-white">
+                    <h5 class="card-title mb-0">Top Selling Items</h5>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="topFoodsChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-5">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-white">
+                    <h5 class="card-title mb-0">Sales by Category</h5>
+                </div>
+                <div class="card-body d-flex align-items-center justify-content-center">
+                    <div class="chart-container">
+                        <canvas id="categorySalesChart"></canvas>
                     </div>
                 </div>
             </div>
@@ -177,22 +224,206 @@
 {% block scripts %}
 {{ super() }}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script type="text/javascript" src="https://cdn.jsdelivr.net/momentjs/latest/moment.min.js"></script>
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
+
+<!-- Store data in a JSON script block to avoid JS syntax errors in IDEs -->
+<script id="dashboard-data" type="application/json">
+{
+    "dates": {{ dates|tojson|safe }},
+    "sales": {{ sales|tojson|safe }},
+    "status_labels": {{ status_labels|tojson|safe }},
+    "status_data": {{ status_data|tojson|safe }},
+    "status_colors": {{ status_colors|tojson|safe }},
+    "hourly_labels": {{ hourly_labels|tojson|safe }},
+    "hourly_data": {{ hourly_data|tojson|safe }},
+    "top_foods_labels": {{ top_foods_labels|tojson|safe }},
+    "top_foods_data": {{ top_foods_data|tojson|safe }},
+    "category_labels": {{ category_labels|tojson|safe }},
+    "category_data": {{ category_data|tojson|safe }}
+}
+</script>
+
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+    // Date Range Picker
+    $(function() {
+        var start = moment('{{ start_date }}');
+        var end = moment('{{ end_date }}');
+
+        function cb(start, end) {
+            $('#reportrange span').html(start.format('MMMM D, YYYY') + ' - ' + end.format('MMMM D, YYYY'));
+            $('#startDate').val(start.format('YYYY-MM-DD'));
+            $('#endDate').val(end.format('YYYY-MM-DD'));
+        }
+
+        $('#reportrange').daterangepicker({
+            startDate: start,
+            endDate: end,
+            ranges: {
+               'Today': [moment(), moment()],
+               'Yesterday': [moment().subtract(1, 'days'), moment().subtract(1, 'days')],
+               'Last 7 Days': [moment().subtract(6, 'days'), moment()],
+               'Last 30 Days': [moment().subtract(29, 'days'), moment()],
+               'This Month': [moment().startOf('month'), moment().endOf('month')],
+               'Last Month': [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')]
+            }
+        }, cb);
+
+        cb(start, end);
+    });
+
+    const data = JSON.parse(document.getElementById('dashboard-data').textContent);
+    
+    // Define chart variables in a higher scope to make them accessible for updates
+    let salesChart, statusChart, hourlySalesChart, topFoodsChart, categorySalesChart;
+
     // Sales Chart
     const salesCtx = document.getElementById('salesChart').getContext('2d');
-    new Chart(salesCtx, {
+    salesChart = new Chart(salesCtx, {
         type: 'line',
-        data: { labels: { dates:tojson|safe }, datasets: [{ label: 'Sales (₹)', data: { sales:tojson|safe }, backgroundColor: 'rgba(0, 123, 255, 0.1)', borderColor: 'rgba(0, 123, 255, 1)', borderWidth: 2, tension: 0.3, fill: true }] },
+        data: {
+            labels: data.dates,
+            datasets: [{
+                label: 'Sales (₹)',
+                data: data.sales,
+                backgroundColor: 'rgba(0, 123, 255, 0.1)',
+                borderColor: 'rgba(0, 123, 255, 1)',
+                borderWidth: 2,
+                tension: 0.3,
+                fill: true
+            }]
+        },
         options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, ticks: { callback: function(value) { return '₹' + value; } } } } }
     });
 
     // Order Status Chart
     const statusCtx = document.getElementById('orderStatusChart').getContext('2d');
-    new Chart(statusCtx, {
+    statusChart = new Chart(statusCtx, {
         type: 'doughnut',
-        data: { labels: { status_labels:tojson|safe }, datasets: [{ label: 'Order Status', data: { status_data:tojson|safe }, backgroundColor: { status_colors:tojson|safe }, hoverOffset: 4 }] },
+        data: {
+            labels: data.status_labels,
+            datasets: [{
+                label: 'Order Status',
+                data: data.status_data,
+                backgroundColor: data.status_colors,
+                hoverOffset: 4
+            }]
+        },
         options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+    });
+
+    // Today's Hourly Sales Chart
+    const hourlyCtx = document.getElementById('hourlySalesChart').getContext('2d');
+    hourlySalesChart = new Chart(hourlyCtx, {
+        type: 'bar',
+        data: {
+            labels: data.hourly_labels,
+            datasets: [{
+                label: 'Sales (₹)',
+                data: data.hourly_data,
+                backgroundColor: 'rgba(25, 135, 84, 0.6)',
+                borderColor: 'rgba(25, 135, 84, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: { callback: function(value) { return '₹' + value; } }
+                }
+            }
+        }
+    });
+
+    // Top Selling Foods Chart
+    const topFoodsCtx = document.getElementById('topFoodsChart').getContext('2d');
+    topFoodsChart = new Chart(topFoodsCtx, {
+        type: 'bar',
+        data: {
+            labels: data.top_foods_labels,
+            datasets: [{
+                label: 'Quantity Sold',
+                data: data.top_foods_data,
+                backgroundColor: 'rgba(255, 159, 64, 0.6)',
+                borderColor: 'rgba(255, 159, 64, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            indexAxis: 'y', // This makes it a horizontal bar chart
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: { x: { beginAtZero: true } }
+        }
+    });
+
+    // Sales by Category Chart
+    const categoryCtx = document.getElementById('categorySalesChart').getContext('2d');
+    categorySalesChart = new Chart(categoryCtx, {
+        type: 'pie',
+        data: {
+            labels: data.category_labels,
+            datasets: [{
+                label: 'Sales',
+                data: data.category_data,
+                hoverOffset: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { position: 'right' } }
+        }
+    });
+
+    // Listen for the custom event dispatched from base.html
+    document.addEventListener('newOrderReceived', function (e) {
+        const newOrder = e.detail;
+        const newAmount = parseFloat(newOrder.total_amount);
+
+        // 1. Update "Today's Sales" stat card
+        const todaysSalesEl = document.getElementById('todays-sales-amount');
+        if (todaysSalesEl) {
+            const currentSales = parseFloat(todaysSalesEl.innerText.replace(/[^0-9.-]+/g,""));
+            const newTotalSales = currentSales + newAmount;
+            todaysSalesEl.innerText = '₹' + newTotalSales.toFixed(2);
+        }
+
+        // 2. Update "Total Orders" stat card
+        const totalOrdersEl = document.getElementById('total-orders-count');
+        if (totalOrdersEl) {
+            totalOrdersEl.innerText = parseInt(totalOrdersEl.innerText) + 1;
+        }
+
+        // 3. Update "Pending Orders" stat card
+        const pendingOrdersEl = document.getElementById('pending-orders-count');
+        if (pendingOrdersEl) {
+            pendingOrdersEl.innerText = parseInt(pendingOrdersEl.innerText) + 1;
+        }
+
+        // 4. Update "Today's Sales by Hour" chart
+        if (hourlySalesChart) {
+            const currentHour = new Date().getHours(); // 0-23
+            if (hourlySalesChart.data.datasets[0].data.length > currentHour) {
+                hourlySalesChart.data.datasets[0].data[currentHour] += newAmount;
+                hourlySalesChart.update('none'); // 'none' for no animation
+            }
+        }
+
+        // 5. Update "Order Status" doughnut chart
+        if (statusChart) {
+            // Assuming 'Pending' is the first status in your config
+            const pendingIndex = data.status_labels.indexOf('Pending');
+            if (pendingIndex !== -1) {
+                statusChart.data.datasets[0].data[pendingIndex] += 1;
+                statusChart.update('none');
+            }
+        }
     });
 });
 </script>

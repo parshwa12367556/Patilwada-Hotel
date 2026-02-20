@@ -85,8 +85,12 @@ def utility_processor():
         'cart_total': calculate_cart_total(),
         'now': datetime.utcnow()
     }
-    if current_user.is_authenticated and current_user.is_admin:
-        data['pending_services_count'] = ServiceRequest.query.filter_by(status='pending').count()
+    if current_user.is_authenticated:
+        if current_user.is_admin:
+            data['pending_services_count'] = ServiceRequest.query.filter_by(status='pending').count()
+            # Get the ID of the most recent order for live notifications
+            latest_order = Order.query.order_by(Order.id.desc()).first()
+            data['latest_order_id'] = latest_order.id if latest_order else 0
     return data
 
 @app.template_filter('status_badge')
@@ -552,12 +556,20 @@ def admin_dashboard():
     total_orders = Order.query.count()
     total_foods = Food.query.count()
     pending_orders = Order.query.filter_by(status='pending').count()
-    
+
+    today = datetime.utcnow().date()
+
+    # Today's sales
+    today_start = datetime.combine(today, datetime.min.time())
+    today_end = datetime.combine(today, datetime.max.time())
+    todays_sales = db.session.query(db.func.sum(Order.total_amount))\
+        .filter(Order.created_at >= today_start, Order.created_at <= today_end)\
+        .filter(Order.status != 'cancelled')\
+        .scalar() or 0
+
     # Sales Chart Data
     end_date_str = request.args.get('end_date')
     start_date_str = request.args.get('start_date')
-    
-    today = datetime.utcnow().date()
     
     if end_date_str and start_date_str:
         try:
@@ -573,6 +585,9 @@ def admin_dashboard():
     # Ensure start_date is not after end_date
     if start_date > end_date:
         start_date = end_date - timedelta(days=6)
+
+    range_start = datetime.combine(start_date, datetime.min.time())
+    range_end = datetime.combine(end_date, datetime.max.time())
 
     dates = []
     sales = []
@@ -609,6 +624,54 @@ def admin_dashboard():
     status_data = [status_counts.get(k, 0) for k in status_config.keys()]
     status_colors = [v['color'] for k, v in status_config.items()]
     
+    # Today's Hourly Sales
+    hourly_sales = {f"{h:02d}": 0 for h in range(24)}
+    hourly_sales_query = db.session.query(
+        db.func.strftime('%H', Order.created_at),
+        db.func.sum(Order.total_amount)
+    ).filter(
+        Order.created_at >= today_start,
+        Order.created_at <= today_end,
+        Order.status != 'cancelled'
+    ).group_by(db.func.strftime('%H', Order.created_at)).all()
+
+    for hour, total in hourly_sales_query:
+        if hour:
+            hourly_sales[hour] = float(total)
+
+    hourly_labels = [f"{h}:00" for h in hourly_sales.keys()]
+    hourly_data = list(hourly_sales.values())
+
+    # Top 5 selling food items by quantity
+    top_foods = db.session.query(
+        Food.name,
+        db.func.sum(OrderItem.quantity).label('total_quantity')
+    ).join(OrderItem, Food.id == OrderItem.food_id)\
+    .join(Order, OrderItem.order_id == Order.id)\
+    .filter(Order.status != 'cancelled')\
+    .filter(Order.created_at >= range_start, Order.created_at <= range_end)\
+    .group_by(Food.name)\
+    .order_by(db.func.sum(OrderItem.quantity).desc())\
+    .limit(5).all()
+
+    top_foods_labels = [item[0] for item in top_foods]
+    top_foods_data = [item[1] for item in top_foods]
+
+    # Sales by category
+    category_sales = db.session.query(
+        Food.category,
+        db.func.sum(OrderItem.price * OrderItem.quantity).label('total_sales')
+    ).join(OrderItem, Food.id == OrderItem.food_id)\
+    .join(Order, OrderItem.order_id == Order.id)\
+    .filter(Order.status != 'cancelled')\
+    .filter(Order.created_at >= range_start, Order.created_at <= range_end)\
+    .group_by(Food.category)\
+    .order_by(db.func.sum(OrderItem.price * OrderItem.quantity).desc())\
+    .all()
+
+    category_labels = [item[0].replace('-', ' ').title() for item in category_sales]
+    category_data = [float(item[1]) for item in category_sales]
+
     recent_orders = Order.query.order_by(Order.created_at.desc()).limit(10).all()
     
     return render_template('admin/dashboard.html',
@@ -616,12 +679,19 @@ def admin_dashboard():
                          total_orders=total_orders,
                          total_foods=total_foods,
                          pending_orders=pending_orders,
+                         todays_sales=todays_sales,
                          recent_orders=recent_orders,
                          dates=dates,
                          sales=sales,
                          status_labels=status_labels,
                          status_data=status_data,
                          status_colors=status_colors,
+                         hourly_labels=hourly_labels,
+                         hourly_data=hourly_data,
+                         top_foods_labels=top_foods_labels,
+                         top_foods_data=top_foods_data,
+                         category_labels=category_labels,
+                         category_data=category_data,
                          start_date=start_date.strftime('%Y-%m-%d'),
                          end_date=end_date.strftime('%Y-%m-%d'))
 
@@ -991,6 +1061,29 @@ def admin_notifications():
     services_count = ServiceRequest.query.filter_by(status='pending').count()
     return jsonify({'services': services_count})
 
+@app.route('/api/admin/new-orders')
+@login_required
+@admin_required
+def new_orders_check():
+    """Check for new orders since the last known ID."""
+    last_order_id = request.args.get('last_order_id', 0, type=int)
+    
+    # Find the most recent order
+    newest_order = Order.query.order_by(Order.id.desc()).first()
+    
+    if newest_order and newest_order.id > last_order_id:
+        return jsonify({
+            'new_order': True,
+            'order': {
+                'id': newest_order.id,
+                'order_number': newest_order.order_number,
+                'customer_name': newest_order.customer.name,
+                'total_amount': newest_order.total_amount
+            }
+        })
+    
+    return jsonify({'new_order': False})
+
 # Coupon Routes
 @app.route('/admin/coupons')
 @login_required
@@ -1178,54 +1271,37 @@ with app.app_context():
     if Food.query.count() == 0:
         print("Seeding database with sample food items...")
         sample_foods = [
-            Food(
-                name='Club Sandwich', 
-                category='sandwich', 
-                price=450.0, 
-                description='Triple-decker sandwich with chicken, bacon, lettuce, tomato, and mayo. Served with fries.', 
-                image='default-food.jpg', 
-                is_available=True
-            ),
-            Food(
-                name='Caesar Salad', 
-                category='starters', 
-                price=350.0, 
-                description='Crisp romaine lettuce, parmesan cheese, croutons, and caesar dressing.', 
-                image='default-food.jpg', 
-                is_available=True
-            ),
-            Food(
-                name='Grilled Salmon', 
-                category='main-course', 
-                price=850.0, 
-                description='Fresh Atlantic salmon grilled to perfection, served with asparagus and lemon butter sauce.', 
-                image='default-food.jpg', 
-                is_available=True
-            ),
-            Food(
-                name='Butter Chicken', 
-                category='main-course', 
-                price=650.0, 
-                description='Tender chicken cooked in a rich tomato and butter gravy. Served with naan.', 
-                image='default-food.jpg', 
-                is_available=True
-            ),
-            Food(
-                name='Continental Breakfast', 
-                category='breakfast', 
-                price=550.0, 
-                description='Assorted pastries, toast, butter, jam, fresh fruit, and coffee or tea.', 
-                image='default-food.jpg', 
-                is_available=True
-            ),
-            Food(
-                name='Cappuccino', 
-                category='beverages', 
-                price=250.0, 
-                description='Freshly brewed espresso with steamed milk and foam.', 
-                image='default-food.jpg', 
-                is_available=True
-            )
+            # Breakfast
+            Food(name='Continental Breakfast', category='breakfast', price=550.0, description='Assorted pastries, toast, butter, jam, fresh fruit, and coffee or tea.', image='breakfast_continental.jpg', is_available=True),
+            Food(name='Masala Dosa', category='breakfast', price=250.0, description='A crisp and savory South Indian pancake, filled with a spiced potato mixture.', image='breakfast_masala_dosa.jpg', is_available=True),
+            
+            # Starters
+            Food(name='Caesar Salad', category='starters', price=350.0, description='Crisp romaine lettuce, parmesan cheese, croutons, and caesar dressing.', image='starter_caesar_salad.jpg', is_available=True),
+            Food(name='Paneer Tikka', category='starters', price=380.0, description='Cubes of paneer marinated in spices and grilled in a tandoor.', image='starter_paneer_tikka.jpg', is_available=True),
+
+            # Pizza
+            Food(name='Margherita Pizza', category='pizza', price=450.0, description='Classic pizza with tomatoes, mozzarella cheese, fresh basil, salt, and extra-virgin olive oil.', image='pizza_margherita.jpg', is_available=True),
+            Food(name='Pepperoni Pizza', category='pizza', price=550.0, description='A classic American pizza topped with spicy pepperoni and mozzarella cheese.', image='pizza_pepperoni.jpg', is_available=True),
+
+            # Burger
+            Food(name='Classic Cheeseburger', category='burger', price=420.0, description='A juicy beef patty with cheddar cheese, lettuce, tomato, onions, and a special sauce.', image='burger_cheeseburger.jpg', is_available=True),
+
+            # Sandwich
+            Food(name='Club Sandwich', category='sandwich', price=450.0, description='Triple-decker sandwich with chicken, bacon, lettuce, tomato, and mayo. Served with fries.', image='sandwich_club.jpg', is_available=True),
+
+            # Main Course
+            Food(name='Grilled Salmon', category='main-course', price=850.0, description='Fresh Atlantic salmon grilled to perfection, served with asparagus and lemon butter sauce.', image='main_grilled_salmon.jpg', is_available=True),
+            Food(name='Butter Chicken', category='main-course', price=650.0, description='Tender chicken cooked in a rich tomato and butter gravy. Served with naan.', image='main_butter_chicken.jpg', is_available=True),
+
+            # Chinese
+            Food(name='Hakka Noodles', category='chinese', price=320.0, description='Stir-fried noodles with a mix of vegetables and a savory sauce.', image='chinese_hakka_noodles.jpg', is_available=True),
+
+            # Beverages
+            Food(name='Cappuccino', category='beverages', price=250.0, description='Freshly brewed espresso with steamed milk and foam.', image='beverage_cappuccino.jpg', is_available=True),
+            Food(name='Fresh Lime Soda', category='beverages', price=150.0, description='A refreshing drink made with fresh lime juice, soda, and a hint of sugar.', image='beverage_lime_soda.jpg', is_available=True),
+
+            # Desserts
+            Food(name='Chocolate Lava Cake', category='desserts', price=300.0, description='A warm chocolate cake with a gooey molten center, served with a scoop of vanilla ice cream.', image='dessert_lava_cake.jpg', is_available=True),
         ]
         
         for food in sample_foods:

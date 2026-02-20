@@ -28,6 +28,9 @@ class LoginForm(FlaskForm):
 class FoodForm(FlaskForm):
     name = StringField('Food Name', validators=[DataRequired(), Length(min=2, max=100)])
     category = SelectField('Category', choices=[
+        ('breakfast', 'Breakfast'),
+        ('starters', 'Starters'),
+        ('main-course', 'Main Course'),
         ('pizza', 'Pizza'),
         ('burger', 'Burger'),
         ('sandwich', 'Sandwich'),
