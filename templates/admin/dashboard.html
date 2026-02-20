@@ -183,7 +183,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const salesCtx = document.getElementById('salesChart').getContext('2d');
     new Chart(salesCtx, {
         type: 'line',
-        data: { labels: { dates:tojson }, datasets: [{ label: 'Sales (₹)', data: { sales:tojson }, backgroundColor: 'rgba(0, 123, 255, 0.1)', borderColor: 'rgba(0, 123, 255, 1)', borderWidth: 2, tension: 0.3, fill: true }] },
+        data: { labels: { dates:tojson|safe }, datasets: [{ label: 'Sales (₹)', data: { sales:tojson|safe }, backgroundColor: 'rgba(0, 123, 255, 0.1)', borderColor: 'rgba(0, 123, 255, 1)', borderWidth: 2, tension: 0.3, fill: true }] },
         options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, ticks: { callback: function(value) { return '₹' + value; } } } } }
     });
 
@@ -191,7 +191,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const statusCtx = document.getElementById('orderStatusChart').getContext('2d');
     new Chart(statusCtx, {
         type: 'doughnut',
-        data: { labels: { status_labels:tojson }, datasets: [{ label: 'Order Status', data: { status_data:tojson }, backgroundColor: { status_colors:tojson }, hoverOffset: 4 }] },
+        data: { labels: { status_labels:tojson|safe }, datasets: [{ label: 'Order Status', data: { status_data:tojson|safe }, backgroundColor: { status_colors:tojson|safe }, hoverOffset: 4 }] },
         options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
     });
 });

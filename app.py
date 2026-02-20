@@ -632,10 +632,20 @@ def manage_foods():
     """Manage food items"""
     
     page = request.args.get('page', 1, type=int)
-    foods = Food.query.order_by(Food.created_at.desc())\
-                     .paginate(page=page, per_page=20)
+    search_query = request.args.get('q', '')
     
-    return render_template('admin/manage_food.html', foods=foods)
+    query = Food.query
+    
+    if search_query:
+        query = query.filter(
+            (Food.name.ilike(f'%{search_query}%')) | 
+            (Food.category.ilike(f'%{search_query}%'))
+        )
+    
+    foods = query.order_by(Food.created_at.desc())\
+                     .paginate(page=page, per_page=10)
+    
+    return render_template('admin/manage_food.html', foods=foods, search_query=search_query)
 
 @app.route('/admin/foods/add', methods=['GET', 'POST'])
 @login_required
